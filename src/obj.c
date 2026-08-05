@@ -809,7 +809,10 @@ static int obj_property_align(lua_State *L, lv_obj_t *obj, bool set)
 {
   if (set) {
     if (lua_isinteger(L, -1)) {
-      lv_obj_align(obj, lua_tointeger(L, -1), 0, 0);
+      /* set_align, not align: property tables apply in hash order, and
+       * lv_obj_align would zero any x/y offsets already applied. LVGL 9
+       * composes set_align with style x/y, so order stops mattering. */
+      lv_obj_set_align(obj, lua_tointeger(L, -1));
       return 0;
     }
 
