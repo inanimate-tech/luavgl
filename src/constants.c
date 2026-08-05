@@ -491,6 +491,21 @@ static const rotable_Reg scrollbar_mode_const_table[] = {
     {0,                0                                  },
 };
 
+static const rotable_Reg text_align_const_table[] = {
+    {.name = "AUTO",   .integer = LV_TEXT_ALIGN_AUTO  },
+    {.name = "LEFT",   .integer = LV_TEXT_ALIGN_LEFT  },
+    {.name = "CENTER", .integer = LV_TEXT_ALIGN_CENTER},
+    {.name = "RIGHT",  .integer = LV_TEXT_ALIGN_RIGHT },
+    {0,                0                              },
+};
+
+static const rotable_Reg grad_dir_const_table[] = {
+    {.name = "NONE", .integer = LV_GRAD_DIR_NONE},
+    {.name = "VER",  .integer = LV_GRAD_DIR_VER },
+    {.name = "HOR",  .integer = LV_GRAD_DIR_HOR },
+    {0,              0                          },
+};
+
 static const rotable_Reg dir_const_table[] = {
     {.name = "NONE",   .integer = LV_DIR_NONE  },
     {.name = "LEFT",   .integer = LV_DIR_LEFT  },
@@ -625,6 +640,8 @@ static void luavgl_constants_init(lua_State *L)
   rotable_setfiled(L, -2, "SCR_LOAD_ANIM", scr_load_anim_const_table);
   rotable_setfiled(L, -2, "SCROLLBAR_MODE", scrollbar_mode_const_table);
   rotable_setfiled(L, -2, "DIR", dir_const_table);
+  rotable_setfiled(L, -2, "TEXT_ALIGN", text_align_const_table);
+  rotable_setfiled(L, -2, "GRAD_DIR", grad_dir_const_table);
 
 #if LV_USE_KEYBOARD
   rotable_setfiled(L, -2, "KEYBOARD_MODE", keyboard_mode_const_table);
