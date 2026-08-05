@@ -184,11 +184,21 @@ static const lv_font_t *_luavgl_font_create(lua_State *L, const char *name,
     if (FONT_WEIGHT_NORMAL != weight)
       return NULL;
 
+    /* Nearest enabled size, not exact match: generated code drifts by a
+     * point or two ("15") and a correct render beats an error. */
+    const lv_font_t *best = NULL;
+    int best_delta = 0;
     for (int i = 0; i < _ARRAY_LEN(g_builtin_montserrat); i++) {
-      if (size == g_builtin_montserrat[i].size) {
-        return g_builtin_montserrat[i].font;
+      int delta = size - g_builtin_montserrat[i].size;
+      if (delta < 0)
+        delta = -delta;
+      if (best == NULL || delta < best_delta) {
+        best = g_builtin_montserrat[i].font;
+        best_delta = delta;
       }
     }
+    if (best)
+      return best;
   } else if (lv_strcmp(name, "unscii") == 0) {
     if (FONT_WEIGHT_NORMAL != weight)
       return NULL;
