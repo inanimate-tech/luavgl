@@ -11,3 +11,7 @@ target_include_directories(simulator PRIVATE widgets)
 
 target_link_libraries(simulator luavgl lvgl lvgl::demos ${SDL2_LIBRARIES} ${LUA_LINK_LIBS})
 target_include_directories(simulator PRIVATE ${LUA_INCLUDE_DIRS})
+
+add_executable(harness harness.c)
+target_link_libraries(harness luavgl lvgl ${SDL2_LIBRARIES} ${LUA_LINK_LIBS})
+target_include_directories(harness PRIVATE ${LUA_INCLUDE_DIRS})

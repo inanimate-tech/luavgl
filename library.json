@@ -1,0 +1,13 @@
+{
+  "name": "luavgl",
+  "version": "0.2.0-arc",
+  "description": "Lua bindings for LVGL 9 (inanimate-tech arc fork)",
+  "repository": { "type": "git", "url": "https://github.com/inanimate-tech/luavgl.git" },
+  "frameworks": "*",
+  "platforms": "*",
+  "build": {
+    "srcDir": "src",
+    "flags": ["-Isrc"]
+  },
+  "export": { "exclude": ["deps", "simulator", "examples", "build"] }
+}
