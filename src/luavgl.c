@@ -12,6 +12,7 @@
 #include "palette.c"
 #include "timer.c"
 #include "util.c"
+#include "mirror.c"
 
 #include "rotable.c"
 
@@ -20,6 +21,7 @@ static const struct luaL_Reg luavgl_methods[] = {
     {"Font",  luavgl_font_create }, /* font.c */
     {"Style", luavgl_style_create}, /* style.c */
     {"Anim",  luavgl_anim_create }, /* anim.c */
+    {"mirror", luavgl_mirror   }, /* mirror.c */
 
     {NULL,    NULL               },
 };
