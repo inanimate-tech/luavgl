@@ -294,23 +294,30 @@ static int luavgl_font_create(lua_State *L)
       continue;
     }
 
+    bool last = false;
     char *end = luavgl_strchr(name, ',');
     if (end != NULL) {
       *end = '\0';
     } else {
       end = name + lv_strlen(name);
+      last = true;
     }
 
     char *trim = end - 1;
-    while (*trim == ' ') {
+    while (trim >= name && *trim == ' ') {
       *trim-- = '\0'; /* trailing space. */
     }
 
-    font = _luavgl_font_create(L, name, size, weight);
-    if (font) {
-      break;
+    if (*name != '\0') {
+      font = _luavgl_font_create(L, name, size, weight);
+      if (font) {
+        break;
+      }
     }
 
+    if (last) {
+      break;
+    }
     name = end + 1; /* next */
   }
 
