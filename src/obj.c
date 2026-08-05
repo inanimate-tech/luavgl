@@ -31,8 +31,12 @@ static void obj_delete_cb(lv_event_t *e)
 #endif
 
   luavgl_obj_t *lobj = luavgl_to_lobj(L, -1);
-  if (lobj->lua_created)
-    goto pop_exit;
+  /* lua_created objects are normally deleted FROM Lua (obj:delete / __gc),
+   * which invalidates the handle itself — but the C side can also delete
+   * them (lv_obj_clean on an app swap). Skipping invalidation here left
+   * dangling pointers behind live handles and anims: use-after-free the
+   * next time anything touched them. Invalidate unconditionally; the Lua
+   * delete path and __gc both tolerate an already-NULL obj. */
 
   /* Clean its children firstly */
   luavgl_obj_clean(L);

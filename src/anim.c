@@ -46,6 +46,19 @@ static void luavgl_anim_exec_cb(void *var, int32_t value)
     return;
   }
 
+  /* If the target object was deleted (e.g. a C-side lv_obj_clean on app
+   * swap), the anim outlives it — lv_obj_delete's anim cleanup can't match
+   * us because lv_anim.var is this wrapper, not the lv_obj. Self-delete
+   * instead of erroring once per frame forever. */
+  lua_rawgeti(L, LUA_REGISTRYINDEX, a->obj_ref);
+  luavgl_obj_t *target = lua_touserdata(L, -1);
+  lua_pop(L, 1);
+  if (target == NULL || target->obj == NULL) {
+    LV_LOG_INFO("anim target deleted; removing orphan anim");
+    lv_anim_del(a, luavgl_anim_exec_cb);
+    return;
+  }
+
   /* stack: 1. function, 2. obj-userdata, 3. value */
   lua_rawgeti(L, LUA_REGISTRYINDEX, a->exec_cb);
   lua_rawgeti(L, LUA_REGISTRYINDEX, a->obj_ref);

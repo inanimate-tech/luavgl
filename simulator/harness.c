@@ -19,6 +19,15 @@
 #include <lualib.h>
 #include <luavgl.h>
 
+/* Mirrors LVGLDriver::open()'s C-side wipe — the path luavgl never sees
+ * coming from Lua. Registered as global `harness_clean_screen`. */
+static int harness_clean_screen(lua_State *L)
+{
+  (void)L;
+  lv_obj_clean(lv_screen_active());
+  return 0;
+}
+
 static int msghandler(lua_State *L)
 {
   const char *msg = lua_tostring(L, 1);
@@ -83,6 +92,8 @@ int main(int argc, char **argv)
   luavgl_set_root(L, root);
   luaL_requiref(L, "lvgl", luaopen_lvgl, 1);
   lua_pop(L, 1);
+  lua_pushcfunction(L, harness_clean_screen);
+  lua_setglobal(L, "harness_clean_screen");
 
   lua_pushcfunction(L, msghandler);
   int base = lua_gettop(L);
