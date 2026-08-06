@@ -57,7 +57,11 @@ void luavgl_arc_theme_init(lv_display_t *disp)
     lv_theme_set_apply_cb(&arc_theme, arc_theme_apply);
     arc_theme_inited = true;
   }
-  /* font depends on this display's dpi — set it each install */
+  /* font depends on this display's dpi — set it each install.
+   * arc_style_label is a shared static, so this write is process-global:
+   * with more than one display, the last luavgl_arc_theme_init() call wins
+   * for all of them. Fine today (one display per process); would need a
+   * per-display style if/when a multi-display face port lands. */
   lv_style_set_text_font(&arc_style_label, arc_pick_font(lv_display_get_dpi(disp)));
   lv_display_set_theme(disp, &arc_theme);
 
