@@ -28,6 +28,16 @@ static int harness_clean_screen(lua_State *L)
   return 0;
 }
 
+/* Mirrors LVGLDriver::open(): wipe the app's tree, return the module.
+ * The root object itself survives (it is the harness's screen stand-in). */
+static int harness_lvgl_open(lua_State *L)
+{
+  lv_obj_t *root = lua_touserdata(L, lua_upvalueindex(2));
+  lv_obj_clean(root);
+  lua_pushvalue(L, lua_upvalueindex(1));   /* the module table */
+  return 1;
+}
+
 static int msghandler(lua_State *L)
 {
   const char *msg = lua_tostring(L, 1);
@@ -93,6 +103,10 @@ int main(int argc, char **argv)
   luaL_openlibs(L);
   luavgl_set_root(L, root);
   luaL_requiref(L, "lvgl", luaopen_lvgl, 1);
+  lua_pushvalue(L, -1);                      /* module table upvalue */
+  lua_pushlightuserdata(L, root);            /* root upvalue */
+  lua_pushcclosure(L, harness_lvgl_open, 2);
+  lua_setfield(L, -2, "open");
   lua_pop(L, 1);
   lua_pushcfunction(L, harness_clean_screen);
   lua_setglobal(L, "harness_clean_screen");
