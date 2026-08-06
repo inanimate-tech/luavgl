@@ -100,6 +100,9 @@ LUALIB_API void luavgl_set_root(lua_State *L, lv_obj_t *root);
 LUALIB_API void luavgl_set_font_extension(lua_State *L, make_font_cb make,
                                           delete_font_cb d);
 
+/* arc fork: install the arc base theme on a display (set its dpi first) */
+void luavgl_arc_theme_init(lv_display_t *disp);
+
 /* on embedded device, may call lib open manually. */
 LUALIB_API int luaopen_lvgl(lua_State *L);
 

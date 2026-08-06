@@ -7,7 +7,9 @@ local lvgl = require("lvgl")
 local root = lvgl.Object(nil, { w = lvgl.HOR_RES(), h = lvgl.VER_RES(),
                                 bg_color = "#000000", border_width = 0, pad_all = 0 })
 root:clear_flag(lvgl.FLAG.SCROLLABLE)
-local m = root:Object{ w = 20, h = 20, bg_color = "#ff0000", border_width = 0, radius = 0, pad_all = 0 }
+-- bg_opa is explicit: the arc base theme (src/arc_theme.c) makes new
+-- Objects transparent by default, so a visible marker must opt in.
+local m = root:Object{ w = 20, h = 20, bg_color = "#ff0000", bg_opa = 255, border_width = 0, radius = 0, pad_all = 0 }
 m:set{ y = 40 }
 m:set{ align = lvgl.ALIGN.TOP_MID }
 print("align-offset: rendered")

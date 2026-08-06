@@ -11,6 +11,16 @@ The simulator is built with cmake and has been tested on ubuntu and mac, but not
   <img src="https://i.ibb.co/nbgYvZW/flappybird.gif" />
 </p>
 
+## Fork patches (arc)
+
+This is the `arc` fork of `XuNeo/luavgl` (see `arc/lvgl-host/README.md` in the
+firmware repo for the desktop test rig). Patches over upstream: font-parser
+OOB/underflow fixes, nearest-size montserrat fallback, `lvgl.TEXT_ALIGN`/
+`lvgl.GRAD_DIR` constant tables, `lvgl.mirror()` tree serialization, the
+harness itself, a PlatformIO `library.json`, and the arc base theme
+(dark/flat/readable, DPI-aware default font) installed by harness and
+firmware.
+
 ## Introduction
 
 `luavgl` is a wrapper around lvgl **core** functions and **widgets** with class inherence in mind, which is lvgl trying to do in `C`. Lua makes widgets inherence happens smoothly.

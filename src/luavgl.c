@@ -13,6 +13,7 @@
 #include "timer.c"
 #include "util.c"
 #include "mirror.c"
+#include "arc_theme.c"
 
 #include "rotable.c"
 

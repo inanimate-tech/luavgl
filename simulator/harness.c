@@ -76,6 +76,8 @@ int main(int argc, char **argv)
   lv_init();
   lv_display_t *disp = lv_sdl_window_create(w, h);
   lv_display_set_default(disp);
+  lv_display_set_dpi(disp, 240);       /* the stick's glass; parity with device */
+  luavgl_arc_theme_init(disp);
 
   /* black, pad-free, border-free root covering the panel */
   lv_obj_t *root = lv_obj_create(lv_scr_act());
