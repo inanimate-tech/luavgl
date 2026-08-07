@@ -89,3 +89,36 @@ built:delete()
 built_line:delete()
 
 print("line_arc: constructor dispatch ok")
+
+-- ------------------------------------------------------------------ scale
+-- The whole dial in one widget: 60 ticks around a full turn, every fifth
+-- one major. Replaces 60 hand-placed lines.
+local scale = root:Scale {
+  w = 260, h = 260,
+  mode = "round_inner",
+  total_tick_count = 61,          -- 61 so the last lands on the first
+  major_tick_every = 5,
+  label_show = false,
+  angle_range = 360,
+  rotation = 270,                 -- first tick at 12 o'clock
+  range = { 0, 60 },
+}
+assert(scale ~= nil, "Scale created from a constructor table")
+
+-- The three parts style different things; MAIN is the minor ticks, ITEMS the
+-- major ones, INDICATOR the labels.
+scale:set_style({ line_width = 4, line_color = "#14141a", length = 10 },
+                lvgl.PART.MAIN)
+scale:set_style({ line_width = 14, line_color = "#14141a", length = 30 },
+                lvgl.PART.ITEMS)
+
+scale:set { mode = "round_outer" }
+scale:set { total_tick_count = 12, major_tick_every = 3 }
+
+ok = pcall(function() scale:set { mode = "sideways" } end)
+assert(not ok, "an unknown scale mode is rejected rather than silently straight")
+ok = pcall(function() scale:set { range = { 5 } } end)
+assert(not ok, "a malformed scale range is rejected")
+
+scale:delete()
+print("line_arc: scale ok")
