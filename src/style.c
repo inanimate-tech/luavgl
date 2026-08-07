@@ -98,6 +98,7 @@ static const struct style_map_s {
     {"image_opa",            LV_STYLE_IMAGE_OPA,            STYLE_TYPE_INT                       },
     {"image_recolor",        LV_STYLE_IMAGE_RECOLOR,        STYLE_TYPE_COLOR                     },
     {"image_recolor_opa",    LV_STYLE_IMAGE_RECOLOR_OPA,    STYLE_TYPE_INT                       },
+    {"length",               LV_STYLE_LENGTH,               STYLE_TYPE_INT                       },
     {"line_width",           LV_STYLE_LINE_WIDTH,           STYLE_TYPE_INT                       },
     {"line_dash_width",      LV_STYLE_LINE_DASH_WIDTH,      STYLE_TYPE_INT                       },
     {"line_dash_gap",        LV_STYLE_LINE_DASH_GAP,        STYLE_TYPE_INT                       },

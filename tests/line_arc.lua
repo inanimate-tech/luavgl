@@ -105,12 +105,12 @@ local scale = root:Scale {
 }
 assert(scale ~= nil, "Scale created from a constructor table")
 
--- The three parts style different things; MAIN is the minor ticks, ITEMS the
--- major ones, INDICATOR the labels.
+-- ITEMS is the MINOR ticks, INDICATOR the MAJOR ones, MAIN the enclosing arc.
 scale:set_style({ line_width = 4, line_color = "#14141a", length = 10 },
-                lvgl.PART.MAIN)
-scale:set_style({ line_width = 14, line_color = "#14141a", length = 30 },
                 lvgl.PART.ITEMS)
+scale:set_style({ line_width = 14, line_color = "#14141a", length = 30 },
+                lvgl.PART.INDICATOR)
+scale:set_style({ arc_opa = lvgl.OPA(0) }, lvgl.PART.MAIN)
 
 scale:set { mode = "round_outer" }
 scale:set { total_tick_count = 12, major_tick_every = 3 }

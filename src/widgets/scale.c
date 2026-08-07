@@ -10,10 +10,15 @@
  * degrees, every major_tick_every one drawn long.
  *
  * The three parts each style a different thing, and getting them mixed up is
- * the usual way to lose an afternoon:
- *   PART.MAIN      the minor ticks   (line_width / line_color / line_length)
- *   PART.ITEMS     the major ticks   (same properties, drawn every Nth)
- *   PART.INDICATOR the labels
+ * the usual way to lose an afternoon — verified against lv_scale.c, not
+ * guessed:
+ *   PART.ITEMS     the MINOR ticks   (lv_obj_init_draw_line_dsc, ITEMS)
+ *   PART.INDICATOR the MAJOR ticks AND the labels
+ *   PART.MAIN      the enclosing arc (set arc_opa 0 to hide it)
+ *
+ * Tick length is the `length` style property (LV_STYLE_LENGTH), which this
+ * branch also had to bind — without it every tick is zero-length, so a
+ * scale renders as nothing at all and looks like a broken widget.
  *
  * `mode` takes a string — "round_inner", "round_outer", "horizontal_top",
  * "horizontal_bottom", "vertical_left", "vertical_right" — rather than a
