@@ -45,6 +45,14 @@
 #include "button.c"
 #endif
 
+#if LV_USE_LINE
+#include "line.c"
+#endif
+
+#if LV_USE_ARC
+#include "arc.c"
+#endif
+
 static int luavgl_obj_create(lua_State *L);
 
 static const luaL_Reg widget_create_methods[] = {
@@ -93,11 +101,27 @@ static const luaL_Reg widget_create_methods[] = {
 #if LV_USE_TEXTAREA
     {"Button",   luavgl_button_create  },
 #endif
+
+#if LV_USE_LINE
+    {"Line",     luavgl_line_create    },
+#endif
+
+#if LV_USE_ARC
+    {"Arc",      luavgl_arc_create     },
+#endif
     {NULL,       NULL                  }
 };
 
 static void luavgl_widgets_init(lua_State *L)
 {
+#if LV_USE_LINE
+  luavgl_line_init(L);
+#endif
+
+#if LV_USE_ARC
+  luavgl_arc_init(L);
+#endif
+
 #if LV_USE_IMAGE
   luavgl_img_init(L);
 #endif
