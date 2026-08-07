@@ -1128,8 +1128,22 @@ LUALIB_API int luavgl_obj_create_helper(lua_State *L,
 
   int top = lua_gettop(L);
 
-  /* Prepare a new stack for set property.  */
-  lua_pushcfunction(L, luavgl_obj_set);
+  /**
+   * Dispatch through the object's OWN `set`, not the generic one.
+   *
+   * The generic setter resolves names through LVGL's property registry, which
+   * covers plain properties (a Label's `text`) but knows nothing of a
+   * binding's composite ones (an Arc's `angles = {start, end}`, a Line's
+   * `points`). Hardcoding luavgl_obj_set here meant those were silently
+   * dropped in the constructor table and only worked via obj:set{...} after
+   * creation — silently, which is the bad part: the widget just kept its
+   * defaults. Every widget with its own setter benefits from this.
+   */
+  lua_getfield(L, -1, "set"); /* obj.set, through the metatable __index */
+  if (!lua_isfunction(L, -1)) {
+    lua_pop(L, 1);
+    lua_pushcfunction(L, luavgl_obj_set);
+  }
   lua_pushvalue(L, -2); /* obj */
   lua_pushvalue(L, 1);  /* prop table */
   lua_call(L, 2, 0);

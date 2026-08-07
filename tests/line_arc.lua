@@ -63,3 +63,29 @@ line:delete()
 arc:delete()
 
 print("line_arc: ok")
+
+-- ---------------------------------------------- constructor dispatch
+-- Widget-specific properties must work in the CONSTRUCTOR table, not only
+-- via obj:set{} afterwards. They used to be dropped silently: the create
+-- helper hardcoded the generic setter, which resolves names through LVGL's
+-- property registry and so knows nothing of composite ones like `angles`.
+-- The widget kept its defaults and said nothing, which is the worst way to
+-- fail. See luavgl_obj_create_helper.
+local built = root:Arc {
+  w = 100, h = 100,
+  rotation = 270,
+  bg_angles = { 0, 360 },
+  angles = { 10, 80 },
+}
+built:set { value = 7, range = { 0, 10 } }
+assert(built:get_value() == 7, "arc built from a constructor table is live")
+
+local built_line = root:Line {
+  points = { { 0, 0 }, { 10, 10 }, { 20, 0 } },
+  line_width = 4,
+}
+assert(built_line ~= nil, "line points accepted in the constructor table")
+built:delete()
+built_line:delete()
+
+print("line_arc: constructor dispatch ok")
