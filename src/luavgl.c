@@ -14,6 +14,7 @@
 #include "util.c"
 #include "mirror.c"
 #include "arc_theme.c"
+#include "bind.c"
 
 #include "rotable.c"
 
@@ -23,6 +24,7 @@ static const struct luaL_Reg luavgl_methods[] = {
     {"Style", luavgl_style_create}, /* style.c */
     {"Anim",  luavgl_anim_create }, /* anim.c */
     {"mirror", luavgl_mirror   }, /* mirror.c */
+    {"bind",  luavgl_bind       }, /* bind.c: display-scoped handle */
 
     {NULL,    NULL               },
 };

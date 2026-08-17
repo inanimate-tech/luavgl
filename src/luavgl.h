@@ -103,6 +103,18 @@ LUALIB_API void luavgl_set_font_extension(lua_State *L, make_font_cb make,
 /* arc fork: install the arc base theme on a display (set its dpi first) */
 void luavgl_arc_theme_init(lv_display_t *disp);
 
+/**
+ * arc fork: push a handle table bound to one lv_display_t (LVGL 9
+ * multi-display). The handle exposes the widget constructors parented to
+ * that display's active screen, plus screen()/clean()/mirror()/HOR_RES()/
+ * VER_RES()/set_default()/set_theme{} — everything else falls through to
+ * the plain module. Binding the same display twice returns the same handle.
+ * Initialises the lvgl module if needed (idempotent). See docs/display-bind.md.
+ *
+ * @return 1 (the handle is on the stack)
+ */
+LUALIB_API int luavgl_bind_display(lua_State *L, lv_display_t *disp);
+
 /* on embedded device, may call lib open manually. */
 LUALIB_API int luaopen_lvgl(lua_State *L);
 

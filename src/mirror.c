@@ -63,10 +63,11 @@ static void luavgl_mirror_walk(luavgl_mirror_buf_t *m, lv_obj_t *obj)
   }
 }
 
-static int luavgl_mirror(lua_State *L)
+/* Serialize one screen's tree; shared by the module-level mirror() (default
+ * display) and the display-bound handle's mirror (bind.c). */
+static int luavgl_mirror_screen(lua_State *L, lv_obj_t *scr)
 {
   luavgl_mirror_buf_t m = {.len = 0};
-  lv_obj_t *scr = lv_screen_active();
   uint32_t count = lv_obj_get_child_count(scr);
   for (uint32_t i = 0; i < count; i++) {
     if (i > 0)
@@ -75,4 +76,9 @@ static int luavgl_mirror(lua_State *L)
   }
   lua_pushlstring(L, m.buf, m.len);
   return 1;
+}
+
+static int luavgl_mirror(lua_State *L)
+{
+  return luavgl_mirror_screen(L, lv_screen_active());
 }
