@@ -21,6 +21,13 @@ harness itself, a PlatformIO `library.json`, and the arc base theme
 (dark/flat/readable, DPI-aware default font) installed by harness and
 firmware.
 
+Also from the fork: **display-scoped binding** for LVGL 9 multi-display —
+`luavgl_bind_display(L, disp)` in C / `lvgl.bind(disp)` in Lua returns a
+handle whose widget constructors land on that display, with a per-display
+theme surface (`handle:set_theme{...}`). The classic single-display entry
+points are unchanged. See [docs/display-bind.md](docs/display-bind.md),
+which also carries the pinning note (consumers pin the `arc` branch).
+
 ## Introduction
 
 `luavgl` is a wrapper around lvgl **core** functions and **widgets** with class inherence in mind, which is lvgl trying to do in `C`. Lua makes widgets inherence happens smoothly.
