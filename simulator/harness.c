@@ -38,6 +38,59 @@ static int harness_lvgl_open(lua_State *L)
   return 1;
 }
 
+/* Forward decl: defined below, used by harness_snapshot. */
+static int write_bmp(const char *path, lv_draw_buf_t *buf);
+
+static void headless_flush_cb(lv_display_t *disp, const lv_area_t *area,
+                              uint8_t *px_map)
+{
+  (void)area; (void)px_map;
+  lv_display_flush_ready(disp);
+}
+
+/* harness_bind_display(w, h) -> display-bound luavgl handle.
+ * Creates a second, headless display (buffer + no-op flush; no SDL window)
+ * and binds it — the desktop stand-in for a second panel. The default
+ * display is untouched (lv_display_create restores it). */
+static int harness_bind_display(lua_State *L)
+{
+  int w = (int)luaL_optinteger(L, 1, 240);
+  int h = (int)luaL_optinteger(L, 2, 135);
+  lv_display_t *disp = lv_display_create(w, h);
+  size_t buf_size = (size_t)w * (size_t)h * 4;
+  void *buf = malloc(buf_size);
+  if (disp == NULL || buf == NULL)
+    return luaL_error(L, "harness_bind_display: out of memory");
+  lv_display_set_buffers(disp, buf, NULL, buf_size,
+                         LV_DISPLAY_RENDER_MODE_DIRECT);
+  lv_display_set_flush_cb(disp, headless_flush_cb);
+  lv_display_set_dpi(disp, 240);
+  /* LVGL's SDL event dispatch walks EVERY display and dereferences
+   * driver_data->window (lv_sdl_get_disp_from_win_id). A headless display
+   * has no driver data, so any SDL event would segfault the run loop.
+   * Hand it a zeroed blob: the window field reads NULL and
+   * SDL_GetWindowID(NULL) harmlessly returns 0. Harness-only shim — real
+   * embedders (device firmware) have no SDL in the process. */
+  lv_display_set_driver_data(disp, calloc(1, 256));
+  return luavgl_bind_display(L, disp);
+}
+
+/* harness_snapshot(obj, path) — render any object (a screen included, from
+ * any display) to a 32bpp BMP for pixel assertions. */
+static int harness_snapshot(lua_State *L)
+{
+  lv_obj_t *obj = luavgl_to_obj(L, 1);
+  const char *path = luaL_checkstring(L, 2);
+  lv_draw_buf_t *snap = lv_snapshot_take(obj, LV_COLOR_FORMAT_ARGB8888);
+  if (snap == NULL)
+    return luaL_error(L, "snapshot failed");
+  int rc = write_bmp(path, snap);
+  lv_draw_buf_destroy(snap);
+  if (rc != 0)
+    return luaL_error(L, "bmp write failed: %s", path);
+  return 0;
+}
+
 static int msghandler(lua_State *L)
 {
   const char *msg = lua_tostring(L, 1);
@@ -110,6 +163,10 @@ int main(int argc, char **argv)
   lua_pop(L, 1);
   lua_pushcfunction(L, harness_clean_screen);
   lua_setglobal(L, "harness_clean_screen");
+  lua_pushcfunction(L, harness_bind_display);
+  lua_setglobal(L, "harness_bind_display");
+  lua_pushcfunction(L, harness_snapshot);
+  lua_setglobal(L, "harness_snapshot");
 
   lua_pushcfunction(L, msghandler);
   int base = lua_gettop(L);
