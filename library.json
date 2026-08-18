@@ -1,7 +1,7 @@
 {
   "name": "luavgl",
-  "version": "0.2.0-arc",
-  "description": "Lua bindings for LVGL 9 (inanimate-tech arc fork)",
+  "version": "0.2.0",
+  "description": "Lua bindings for LVGL 9 (Inanimate fork)",
   "repository": {
     "type": "git",
     "url": "https://github.com/inanimate-tech/luavgl.git"

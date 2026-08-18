@@ -1,7 +1,7 @@
 /* lvgl.mirror() — compact, model-readable serialization of the active
- * screen's object tree. Used by arc to publish the device's view as tokens:
- * one entry per visible object, class short-name plus label text, child
- * order preserved, capped well under the transport budget.
+ * screen's object tree. For embedders that publish the device's view as
+ * text: one entry per visible object, class short-name plus label text,
+ * child order preserved, capped well under a small transport budget.
  */
 #include "luavgl.h"
 #include "private.h"

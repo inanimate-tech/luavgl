@@ -11,22 +11,30 @@ The simulator is built with cmake and has been tested on ubuntu and mac, but not
   <img src="https://i.ibb.co/nbgYvZW/flappybird.gif" />
 </p>
 
-## Fork patches (arc)
+## Inanimate fork
 
-This is the `arc` fork of `XuNeo/luavgl` (see `arc/lvgl-host/README.md` in the
-firmware repo for the desktop test rig). Patches over upstream: font-parser
-OOB/underflow fixes, nearest-size montserrat fallback, `lvgl.TEXT_ALIGN`/
-`lvgl.GRAD_DIR` constant tables, `lvgl.mirror()` tree serialization, the
-harness itself, a PlatformIO `library.json`, and the arc base theme
-(dark/flat/readable, DPI-aware default font) installed by harness and
-firmware.
+This is the Inanimate fork of [XuNeo/luavgl](https://github.com/XuNeo/luavgl).
+Upstream's single-display API is unchanged. What the fork adds:
 
-Also from the fork: **display-scoped binding** for LVGL 9 multi-display —
-`luavgl_bind_display(L, disp)` in C / `lvgl.bind(disp)` in Lua returns a
-handle whose widget constructors land on that display, with a per-display
-theme surface (`handle:set_theme{...}`). The classic single-display entry
-points are unchanged. See [docs/display-bind.md](docs/display-bind.md),
-which also carries the pinning note (consumers pin the `arc` branch).
+- **Display-scoped binding.** Drive several panels from one Lua state — see
+  [docs/display-bind.md](docs/display-bind.md).
+- **A theme surface in Lua.** `handle:set_theme{...}` sets widget defaults per
+  display.
+- **A base theme in C.** Dark, flat, readable (`src/base_theme.c`). Optional.
+- **Font fixes.** No out-of-bounds read on odd font names. A missing montserrat
+  size falls back to the nearest one compiled in.
+- **Safe handles.** Deleting an object from C invalidates the Lua handles that
+  pointed at it. Orphaned animations delete themselves.
+- **An alignment fix.** Setting `align` to an integer no longer discards the
+  object's `x`/`y` offsets.
+- **Three more widgets.** `lv_line`, `lv_arc`, `lv_scale`.
+- **Two more constant tables.** `lvgl.TEXT_ALIGN` and `lvgl.GRAD_DIR`.
+- **`lvgl.mirror()`.** Serialises the screen's object tree to short text.
+- **A headless harness.** `simulator/harness.c` renders a script to a BMP, so
+  tests in `tests/` can assert on pixels.
+- **A PlatformIO manifest.** `library.json`, building `src/luavgl.c` alone.
+
+Pinning: build against `main`. Pin a commit SHA if you need a frozen build.
 
 ## Introduction
 

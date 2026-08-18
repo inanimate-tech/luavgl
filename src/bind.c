@@ -1,4 +1,4 @@
-/* bind.c — display-scoped binding (arc fork).
+/* bind.c — display-scoped binding (Inanimate fork).
  *
  * LVGL 9 is natively multi-display; luavgl's module surface assumes the
  * default display. luavgl_bind_display(L, disp) pushes a HANDLE table bound
@@ -163,7 +163,7 @@ typedef struct luavgl_bound_theme_s {
 
 /* Class slots settable from Lua. "object" is the base pass: LVGL applies
  * themes per class level, so an "object" style is the base default for
- * every widget (that is how the arc C theme keeps objects flat), with the
+ * every widget (that is how the C base theme keeps objects flat), with the
  * class-specific slot layered on top. */
 static const struct {
   const char *name;
@@ -261,7 +261,7 @@ static lv_style_t *luavgl_bound_resolve_style(lua_State *L, int idx, int *ref)
  *   screen: added to the CURRENT active screen immediately (bg color etc.)
  *   class slots: become that display's defaults for newly created objects
  * handle:set_theme(nil) uninstalls, restoring the previously installed
- * theme (e.g. the arc C theme). Each call replaces the previous slot set.
+ * theme (e.g. the C base theme). Each call replaces the previous slot set.
  * upvalues: 1 = disp userdata, 2 = the handle table. */
 static int luavgl_bound_set_theme(lua_State *L)
 {
@@ -319,7 +319,7 @@ static int luavgl_bound_set_theme(lua_State *L)
   if (!t->installed) {
     lv_theme_set_apply_cb(&t->theme, luavgl_bound_theme_apply);
     lv_theme_t *parent = lv_display_get_theme(disp);
-    /* parent applies first, so Lua defaults override C ones (arc theme) */
+    /* parent applies first, so Lua defaults override C ones (base theme) */
     if (parent != NULL && parent != &t->theme)
       lv_theme_set_parent(&t->theme, parent);
     lv_display_set_theme(disp, &t->theme);

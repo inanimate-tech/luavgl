@@ -1,5 +1,6 @@
--- The lvgl-demo generation's view portion, host-runnable: arc lines are
--- stubbed, the luavgl code is byte-identical to m5stick-arc/app/lvgl-demo.lua.
+-- A representative device app's view, host-runnable: a counter label, a
+-- caption, and a pulsing dot. Kept byte-identical to the on-device source
+-- so host renders and device renders can be compared.
 local lvgl = require("lvgl")
 
 local root = lvgl.Object(nil, {
@@ -21,8 +22,8 @@ pulse:Anim{ run = true, start_value = 60, end_value = 255, duration = 900,
   repeat_count = lvgl.ANIM_REPEAT_INFINITE, path = "ease_in_out",
   exec_cb = function(o, v) o:set{ bg_opa = math.floor(v * 100 / 255) } end }
 
--- simulate three bump intents
+-- simulate three button presses
 local count = 0
 for i = 1, 3 do count = count + 1; counter:set{ text = tostring(count) } end
 assert(lvgl.mirror():find("3", 1, true), "counter should read 3")
-print("arc-demo: OK")
+print("demo-view: OK")

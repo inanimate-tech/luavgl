@@ -100,11 +100,11 @@ LUALIB_API void luavgl_set_root(lua_State *L, lv_obj_t *root);
 LUALIB_API void luavgl_set_font_extension(lua_State *L, make_font_cb make,
                                           delete_font_cb d);
 
-/* arc fork: install the arc base theme on a display (set its dpi first) */
-void luavgl_arc_theme_init(lv_display_t *disp);
+/* Inanimate fork: install the base theme on a display (set its dpi first) */
+void luavgl_base_theme_init(lv_display_t *disp);
 
 /**
- * arc fork: push a handle table bound to one lv_display_t (LVGL 9
+ * Inanimate fork: push a handle table bound to one lv_display_t (LVGL 9
  * multi-display). The handle exposes the widget constructors parented to
  * that display's active screen, plus screen()/clean()/mirror()/HOR_RES()/
  * VER_RES()/set_default()/set_theme{} — everything else falls through to

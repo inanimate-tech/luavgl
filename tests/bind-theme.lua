@@ -1,6 +1,6 @@
 -- Theme surface through display-bound handles, rendered for pixel
--- assertions (tests/check-bind.sh): Lua-set defaults must override the arc
--- C theme on the display they were set on, and only there.
+-- assertions (tests/check-bind.sh): Lua-set defaults must override the
+-- C base theme on the display they were set on, and only there.
 local lvgl = require("lvgl")
 
 -- default (SDL) display: themed via its bound handle; the harness snapshots
@@ -22,7 +22,7 @@ right:set_theme {
 right.Label { text = "RIGHT", x = 10, y = 10 }
 harness_snapshot(right.screen(), "/tmp/bind-right.bmp")
 
--- the arc default label color must still hold where no Lua theme was set:
+-- the base default label color must still hold where no Lua theme was set:
 -- a label on the right display created BEFORE its theme existed would be
 -- off-white; simplest cross-check is that d's theme did not leak to right
 -- (asserted by pixel: right label is green, not red)
