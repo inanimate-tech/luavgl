@@ -1014,6 +1014,14 @@ function label:cut_text(pos, cnt)
 end
 
 ---
+--- Where a character was laid out, relative to the label.
+--- @param char_id integer 0-based character index (not byte)
+--- @return integer x
+--- @return integer y
+function label:get_letter_pos(char_id)
+end
+
+---
 --- Textarea widget
 ---@class Textarea: Object
 ---
