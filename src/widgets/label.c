@@ -27,6 +27,23 @@ static int luavgl_label_cut_text(lua_State *L)
   return 0;
 }
 
+/* label:get_letter_pos(char_id) -> x, y
+ * Where LVGL laid out the char_id-th character (0-based, counted in
+ * characters, not bytes), relative to the label: lv_label_get_letter_pos.
+ * What an effect needs to draw something at a character's place without
+ * changing the label's text, and so without re-wrapping it. */
+static int luavgl_label_get_letter_pos(lua_State *L)
+{
+  lv_obj_t *obj = luavgl_to_obj(L, 1);
+  uint32_t char_id = luavgl_tointeger(L, 2);
+  lv_point_t pos;
+
+  lv_label_get_letter_pos(obj, char_id, &pos);
+  lua_pushinteger(L, pos.x);
+  lua_pushinteger(L, pos.y);
+  return 2;
+}
+
 static int luavgl_label_tostring(lua_State *L)
 {
   lv_obj_t *obj = luavgl_to_obj(L, 1);
@@ -37,6 +54,7 @@ static int luavgl_label_tostring(lua_State *L)
 static const rotable_Reg luavgl_label_methods[] = {
     {"ins_text",        LUA_TFUNCTION, {luavgl_label_ins_text}       },
     {"cut_text",        LUA_TFUNCTION, {luavgl_label_cut_text}       },
+    {"get_letter_pos",  LUA_TFUNCTION, {luavgl_label_get_letter_pos} },
 
     {0,                 0,             {0}                           },
 };
