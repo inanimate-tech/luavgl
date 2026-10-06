@@ -56,7 +56,7 @@ static const struct style_map_s {
     {"translate_x",          LV_STYLE_TRANSLATE_X,          STYLE_TYPE_INT                       },
     {"translate_y",          LV_STYLE_TRANSLATE_Y,          STYLE_TYPE_INT                       },
     {"transform_scale_x",    LV_STYLE_TRANSFORM_SCALE_X,    STYLE_TYPE_INT                       },
-    {"transform_scale_y",    LV_STYLE_TRANSFORM_SCALE_X,    STYLE_TYPE_INT                       },
+    {"transform_scale_y",    LV_STYLE_TRANSFORM_SCALE_Y,    STYLE_TYPE_INT                       },
     {"transform_rotation",   LV_STYLE_TRANSFORM_ROTATION,   STYLE_TYPE_INT                       },
 #if LV_VERSION_CHECK(8, 3, 0)
     {"transform_pivot_x",    LV_STYLE_TRANSFORM_PIVOT_X,    STYLE_TYPE_INT                       },
