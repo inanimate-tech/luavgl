@@ -107,6 +107,14 @@ LUALIB_API int luaopen_lvgl(lua_State *L)
 {
   luavgl_ctx_t *ctx = luavgl_context(L);
 
+#if (LUA_VERSION_NUM < 502)
+  /* 5.1 has no LUA_RIDX_MAINTHREAD: remember the main thread, if this is it */
+  if (lua_pushthread(L))
+    lua_setfield(L, LUA_REGISTRYINDEX, luavgl_main_thread_key);
+  else
+    lua_pop(L, 1);
+#endif
+
   luaL_newlib(L, luavgl_methods);
 
   luaL_newmetatable(L, "root.meta");
