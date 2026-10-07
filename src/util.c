@@ -51,6 +51,28 @@ static int luavgl_check_continuation(lua_State *L, int index)
   return luaL_ref(L, LUA_REGISTRYINDEX);
 }
 
+#if (LUA_VERSION_NUM < 502)
+static const char *luavgl_main_thread_key = "luavgl_main_thread";
+#endif
+
+/**
+ * The thread an lvgl callback (anim, timer, event) calls back on. Not the
+ * thread that registered it: that may be a coroutine, and a coroutine's
+ * lua_State is freed once it ends and is collected, while lvgl goes on
+ * calling back for as long as the anim, timer or event lives.
+ */
+static lua_State *luavgl_main_thread(lua_State *L)
+{
+#if (LUA_VERSION_NUM >= 502)
+  lua_rawgeti(L, LUA_REGISTRYINDEX, LUA_RIDX_MAINTHREAD);
+#else
+  lua_getfield(L, LUA_REGISTRYINDEX, luavgl_main_thread_key);
+#endif
+  lua_State *main = lua_tothread(L, -1);
+  lua_pop(L, 1);
+  return main ? main : L;
+}
+
 static void dumpvalue(lua_State *L, int i, bool cr)
 {
   const char ending = cr ? '\n' : '\0';

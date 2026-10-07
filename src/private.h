@@ -21,6 +21,7 @@ static void luavgl_obj_remove_event_all(lua_State *L, luavgl_obj_t *obj);
 /* util functions */
 static void luavgl_check_callable(lua_State *L, int index);
 static int luavgl_check_continuation(lua_State *L, int index);
+static lua_State *luavgl_main_thread(lua_State *L);
 
 static int luavgl_obj_set_style_kv(lua_State *L, lv_obj_t *obj, int selector);
 
