@@ -25,6 +25,9 @@ Upstream's single-display API is unchanged. What the fork adds:
   size falls back to the nearest one compiled in.
 - **Safe handles.** Deleting an object from C invalidates the Lua handles that
   pointed at it. Orphaned animations delete themselves.
+- **Callbacks on the main thread.** An Anim, Timer or event callback
+  registered from a coroutine calls back on the main thread, not on the
+  coroutine, which is freed once it ends. Offered upstream.
 - **An alignment fix.** Setting `align` to an integer no longer discards the
   object's `x`/`y` offsets.
 - **Three more widgets.** `lv_line`, `lv_arc`, `lv_scale`.
