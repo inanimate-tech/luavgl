@@ -108,7 +108,7 @@ static int luavgl_obj_on_event(lua_State *L)
   }
 
   event->code = code;
-  event->L = L;
+  event->L = luavgl_main_thread(L);
   event->ref = luavgl_check_continuation(L, 3);
   event->dsc = lv_obj_add_event_cb(obj, luavgl_obj_event_cb, code, event);
   if (event->dsc == NULL) {

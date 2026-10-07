@@ -279,7 +279,7 @@ static int luavgl_anim_create(lua_State *L)
   a->done_cb = LUA_NOREF;
   a->self_ref = LUA_NOREF;
   a->aa = NULL;
-  a->L = L;
+  a->L = luavgl_main_thread(L);
   a->deleted = false;
 
   lv_anim_t *cfg = &a->cfg;

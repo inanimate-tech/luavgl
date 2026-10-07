@@ -92,7 +92,7 @@ static int luavgl_timer_create(lua_State *L)
     return luaL_error(L, "No memory");
   }
   data->ref = LUA_NOREF;
-  data->L = L;
+  data->L = luavgl_main_thread(L);
 
   lv_timer_t *t = lv_timer_create(luavgl_timer_cb, 0, data);
 
