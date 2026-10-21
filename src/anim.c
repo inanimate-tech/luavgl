@@ -89,6 +89,27 @@ static void luavgl_anim_unpin(luavgl_anim_t *a)
   a->self_ref = LUA_NOREF;
 }
 
+/* luavgl_app_reset deletes every anim as anim:delete() would, without
+ * running the outgoing app's done_cb: its code must not run under the next
+ * app, and a handle the app kept must not keep its closures alive. */
+static bool luavgl_anim_reset(luavgl_anim_t *a)
+{
+  lua_State *L = a->L;
+  if (!luavgl_context(L)->resetting)
+    return false;
+
+  luaL_unref(L, LUA_REGISTRYINDEX, a->done_cb);
+  luaL_unref(L, LUA_REGISTRYINDEX, a->exec_cb);
+  luaL_unref(L, LUA_REGISTRYINDEX, a->obj_ref);
+  a->done_cb = LUA_NOREF;
+  a->exec_cb = LUA_NOREF;
+  a->obj_ref = LUA_NOREF;
+  a->deleted = true;
+  a->aa = NULL;
+  luavgl_anim_unpin(a);
+  return true;
+}
+
 #if LVGL_VERSION_MAJOR >= 9
 /* LVGL 9 calls completed_cb when an anim plays to its end, then deleted_cb;
  * lv_anim_delete (anim:stop()) calls deleted_cb alone. So done_cb runs on
@@ -103,6 +124,8 @@ static void luavgl_anim_completed_cb(lv_anim_t *_a)
 static void luavgl_anim_deleted_cb(lv_anim_t *_a)
 {
   luavgl_anim_t *a = _a->var;
+  if (luavgl_anim_reset(a))
+    return;
   /* done_cb restarted it (the usual way to loop an anim): it is running
    * again as a new handler, and must stay pinned */
   if (a->aa != NULL && a->aa != _a)
@@ -115,6 +138,8 @@ static void luavgl_anim_deleted_cb(lv_anim_t *_a)
 static void luavgl_anim_delete_cb(lv_anim_t *_a)
 {
   luavgl_anim_t *a = _a->var;
+  if (luavgl_anim_reset(a))
+    return;
   a->aa = NULL; /* handler deleted by lvgl */
   luavgl_anim_call_done_cb(a);
 

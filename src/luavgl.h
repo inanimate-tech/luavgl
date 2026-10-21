@@ -24,6 +24,7 @@ typedef struct {
   make_font_cb make_font;
   delete_font_cb delete_font;
   luavgl_pcall_t pcall;
+  bool resetting; /* inside luavgl_app_reset: no app callbacks run */
 } luavgl_ctx_t;
 
 typedef enum {
@@ -114,6 +115,24 @@ void luavgl_base_theme_init(lv_display_t *disp);
  * @return 1 (the handle is on the stack)
  */
 LUALIB_API int luavgl_bind_display(lua_State *L, lv_display_t *disp);
+
+/**
+ * Inanimate fork: release everything one app made, for an embedder that
+ * keeps one lua_State across a sequence of apps. Afterwards none of the
+ * outgoing app's callbacks can run, and what it created is collectable:
+ *   - every Lua timer is deleted (its callback ref and pin dropped, the
+ *     lv_timer freed); a handle the app kept raises "timer is null"
+ *   - every Lua anim is deleted, without running its done_cb
+ *   - every Lua theme is uninstalled and its styles released
+ *   - every Lua Style is unpinned
+ *   - Lua-created objects on each display's top and system layers, and
+ *     Lua-created screens that are not active, are deleted
+ * Call it after deleting the app's objects on the active screens (styles
+ * are released here, and must not be on a live object), and before a GC
+ * that should reclaim the app's closures. Never from an lvgl callback.
+ * Lua-created groups are not touched.
+ */
+LUALIB_API void luavgl_app_reset(lua_State *L);
 
 /* on embedded device, may call lib open manually. */
 LUALIB_API int luaopen_lvgl(lua_State *L);

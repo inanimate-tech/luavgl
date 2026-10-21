@@ -15,6 +15,7 @@
 #include "mirror.c"
 #include "base_theme.c"
 #include "bind.c"
+#include "reset.c"
 
 #include "rotable.c"
 

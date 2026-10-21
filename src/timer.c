@@ -172,7 +172,7 @@ static int luavgl_timer_delete(lua_State *L)
 {
   lv_timer_t *t = luavgl_check_timer(L, 1);
   if (t == NULL) {
-    return luaL_argerror(L, 1, "timer is null");
+    return 0; /* already freed by luavgl_app_reset */
   }
 
   luavgl_timer_t *data = t->user_data;
@@ -194,10 +194,14 @@ static int luavgl_timer_delete(lua_State *L)
 
 static int luavgl_timer_gc(lua_State *L)
 {
+  lv_timer_t *t = luavgl_check_timer(L, 1);
+  if (t == NULL) {
+    return 0; /* already freed by luavgl_app_reset */
+  }
+
   /* stop timer if not stopped. */
   luavgl_timer_delete(L);
 
-  lv_timer_t *t = luavgl_check_timer(L, 1);
   free(t->user_data);
   lv_timer_del(t);
 
