@@ -28,6 +28,16 @@ static int harness_clean_screen(lua_State *L)
   return 0;
 }
 
+/* Mirrors an embedder's app swap (Resident's LvglModule::onAppReset): the
+ * app's screen tree is gone, then luavgl_app_reset releases the rest.
+ * Registered as global `harness_app_reset`. */
+static int harness_app_reset(lua_State *L)
+{
+  lv_obj_clean(lv_screen_active());
+  luavgl_app_reset(L);
+  return 0;
+}
+
 /* Mirrors LVGLDriver::open(): wipe the app's tree, return the module.
  * The root object itself survives (it is the harness's screen stand-in). */
 static int harness_lvgl_open(lua_State *L)
@@ -163,6 +173,8 @@ int main(int argc, char **argv)
   lua_pop(L, 1);
   lua_pushcfunction(L, harness_clean_screen);
   lua_setglobal(L, "harness_clean_screen");
+  lua_pushcfunction(L, harness_app_reset);
+  lua_setglobal(L, "harness_app_reset");
   lua_pushcfunction(L, harness_bind_display);
   lua_setglobal(L, "harness_bind_display");
   lua_pushcfunction(L, harness_snapshot);

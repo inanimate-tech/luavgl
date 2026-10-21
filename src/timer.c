@@ -95,6 +95,12 @@ static int luavgl_timer_create(lua_State *L)
   data->L = luavgl_main_thread(L);
 
   lv_timer_t *t = lv_timer_create(luavgl_timer_cb, 0, data);
+#if LVGL_VERSION_MAJOR >= 9
+  /* LVGL 9 deletes a timer whose repeat_count runs out, under the handle
+   * Lua still holds: __gc would then free it again. Pause it instead; its
+   * handle frees it as usual. */
+  lv_timer_set_auto_delete(t, false);
+#endif
 
   *(void **)lua_newuserdata(L, sizeof(void *)) = t;
   luaL_getmetatable(L, "lv_timer");
@@ -166,7 +172,7 @@ static int luavgl_timer_delete(lua_State *L)
 {
   lv_timer_t *t = luavgl_check_timer(L, 1);
   if (t == NULL) {
-    return luaL_argerror(L, 1, "timer is null");
+    return 0; /* already freed by luavgl_app_reset */
   }
 
   luavgl_timer_t *data = t->user_data;
@@ -188,10 +194,14 @@ static int luavgl_timer_delete(lua_State *L)
 
 static int luavgl_timer_gc(lua_State *L)
 {
+  lv_timer_t *t = luavgl_check_timer(L, 1);
+  if (t == NULL) {
+    return 0; /* already freed by luavgl_app_reset */
+  }
+
   /* stop timer if not stopped. */
   luavgl_timer_delete(L);
 
-  lv_timer_t *t = luavgl_check_timer(L, 1);
   free(t->user_data);
   lv_timer_del(t);
 

@@ -239,7 +239,10 @@ static luavgl_bound_theme_t *luavgl_bound_theme_get(lua_State *L,
 
 /* Style at idx: either an lvgl.Style userdata or a plain table (wrapped into
  * a Style). Pops nothing; pins the Style via a registry ref returned in
- * *ref. Styles passed here must not be style:delete()'d while themed. */
+ * *ref. Styles passed here must not be style:delete()'d while themed. A
+ * wrapped table's Style also keeps its creation pin after the slot lets go:
+ * objects created under the theme still carry it. luavgl_app_reset releases
+ * both, once those objects are gone. */
 static lv_style_t *luavgl_bound_resolve_style(lua_State *L, int idx, int *ref)
 {
   idx = lua_absindex(L, idx);

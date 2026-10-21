@@ -527,6 +527,31 @@ static int luavgl_style_set(lua_State *L)
   return 0;
 }
 
+/* Push registry["luavgl.styles"], style lightuserdata -> style userdata:
+ * the pins that keep a style alive until style:delete(), in a table of
+ * their own so luavgl_app_reset can release them all. */
+static void luavgl_style_pins(lua_State *L)
+{
+  lua_pushstring(L, "luavgl.styles");
+  lua_rawget(L, LUA_REGISTRYINDEX);
+  if (lua_isnil(L, -1)) {
+    lua_pop(L, 1);
+    lua_newtable(L);
+    lua_pushstring(L, "luavgl.styles");
+    lua_pushvalue(L, -2);
+    lua_rawset(L, LUA_REGISTRYINDEX);
+  }
+}
+
+static void luavgl_style_unpin(lua_State *L, luavgl_style_t *s)
+{
+  luavgl_style_pins(L);
+  lua_pushlightuserdata(L, s);
+  lua_pushnil(L);
+  lua_rawset(L, -3);
+  lua_pop(L, 1);
+}
+
 /**
  * luavgl.Style({
  *  bg_color = 0xff0000,
@@ -549,9 +574,11 @@ static int luavgl_style_create(lua_State *L)
   luaL_getmetatable(L, "lv_style");
   lua_setmetatable(L, -2);
 
+  luavgl_style_pins(L);
   lua_pushlightuserdata(L, s);
-  lua_pushvalue(L, -2);
-  lua_rawset(L, LUA_REGISTRYINDEX);
+  lua_pushvalue(L, -3);
+  lua_rawset(L, -3);
+  lua_pop(L, 1);
 
   lua_rotate(L, 1, 1); /* stack after: style-user-data, para */
 
@@ -583,11 +610,7 @@ static int luavgl_style_remove_prop(lua_State *L)
 static int luavgl_style_delete(lua_State *L)
 {
   luavgl_style_t *s = luavgl_check_style(L, 1);
-
-  lua_pushlightuserdata(L, s);
-  lua_pushnil(L);
-  lua_rawset(L, LUA_REGISTRYINDEX);
-
+  luavgl_style_unpin(L, s);
   return 1;
 }
 
