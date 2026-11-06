@@ -139,6 +139,21 @@ static void dumpstack(lua_State *L)
   fflush(stdout);
 }
 
+/**
+ * metatable.__metatable = false, for the table at idx. luavgl's metatables
+ * are shared by every script on the state: getmetatable() on a value would
+ * otherwise hand a script the table itself, and what it wrote there (an
+ * __index, a __gc) would apply to every value of the type, in every later
+ * script. getmetatable() now returns false, and setmetatable() raises.
+ * lua_getmetatable and luaL_checkudata from C ignore the field.
+ */
+static void luavgl_seal_metatable(lua_State *L, int idx)
+{
+  idx = lua_absindex(L, idx);
+  lua_pushboolean(L, 0);
+  lua_setfield(L, idx, "__metatable");
+}
+
 LUALIB_API int luavgl_createmetatable(lua_State *L, const void *key,
                                       const char *name)
 {
@@ -149,6 +164,7 @@ LUALIB_API int luavgl_createmetatable(lua_State *L, const void *key,
     lua_pushstring(L, name);
     lua_setfield(L, -2, "__name"); /* metatable.__name = tname */
   }
+  luavgl_seal_metatable(L, -1);
 
   /* add to registry */
   lua_pushlightuserdata(L, (void *)key);
@@ -183,6 +199,7 @@ LUALIB_API int luavgl_obj_createmetatable(lua_State *L,
     lua_pushstring(L, name);
     lua_setfield(L, -2, "__name"); /* metatable.__name = tname */
   }
+  luavgl_seal_metatable(L, -1);
 
   /* add to registry */
   lua_pushlightuserdata(L, (void *)clz);
