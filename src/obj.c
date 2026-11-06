@@ -1047,6 +1047,32 @@ static int obj_meta__gc(lua_State *L)
   return 0;
 }
 
+/**
+ * widgets.__index. Upvalue 1: the widgets table. Returns a constructor from
+ * it, luavgl's own or one an embedder registered there (see "Custom Widget"
+ * in the README), and never a "__" key. Were widgets its own __index, as it
+ * used to be, `lvgl.__index` and `obj.__index` would both hand a script the
+ * table, and what the script wrote there would reach every later script on
+ * the state.
+ */
+static int widgets_meta__index(lua_State *L)
+{
+  if (lua_type(L, 2) != LUA_TSTRING) {
+    lua_pushnil(L);
+    return 1;
+  }
+
+  const char *key = lua_tostring(L, 2);
+  if (key[0] == '_' && key[1] == '_') {
+    lua_pushnil(L);
+    return 1;
+  }
+
+  lua_pushvalue(L, 2);
+  lua_rawget(L, lua_upvalueindex(1));
+  return 1;
+}
+
 static const luaL_Reg obj_meta_methods[] = {
     {"__index",    obj_meta__index   },
     {"__newindex", obj_meta__newindex},
@@ -1062,10 +1088,15 @@ static void luavgl_obj_init(lua_State *L)
   luaL_setfuncs(L, obj_meta_methods, 0);
   lua_pop(L, 1);
 
-  /* 2. Widget creation methods table */
+  /* 2. Widget creation methods table: the metatable of the module, and where
+   * every object's method lookup ends. */
   luaL_newmetatable(L, "widgets");
   luaL_setfuncs(L, widget_create_methods, 0);
-  lua_setfield(L, -1, "__index");
+  lua_pushvalue(L, -1);
+  lua_pushcclosure(L, widgets_meta__index, 1);
+  lua_setfield(L, -2, "__index");
+  luavgl_seal_metatable(L, -1);
+  lua_pop(L, 1);
 
   /* 3. Base lv_obj metatable */
   luavgl_obj_newmetatable(L, &lv_obj_class, "lv_obj", luavgl_obj_methods);

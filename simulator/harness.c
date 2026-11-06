@@ -85,6 +85,14 @@ static int harness_bind_display(lua_State *L)
   return luavgl_bind_display(L, disp);
 }
 
+/* lvgl.HarnessWidget{...} — a plain object, standing in for an embedder's
+ * custom widget, registered on the "widgets" metatable as the README's
+ * "Custom Widget" section describes. */
+static int harness_custom_widget(lua_State *L)
+{
+  return luavgl_obj_create_helper(L, lv_obj_create);
+}
+
 /* harness_snapshot(obj, path) — render any object (a screen included, from
  * any display) to a 32bpp BMP for pixel assertions. */
 static int harness_snapshot(lua_State *L)
@@ -179,6 +187,10 @@ int main(int argc, char **argv)
   lua_setglobal(L, "harness_bind_display");
   lua_pushcfunction(L, harness_snapshot);
   lua_setglobal(L, "harness_snapshot");
+  luaL_getmetatable(L, "widgets");
+  lua_pushcfunction(L, harness_custom_widget);
+  lua_setfield(L, -2, "HarnessWidget");
+  lua_pop(L, 1);
 
   lua_pushcfunction(L, msghandler);
   int base = lua_gettop(L);

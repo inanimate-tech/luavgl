@@ -5,7 +5,8 @@ This fork adds a handle tied to a single display.
 
 - Bind a display and you get a handle.
 - Widgets made through that handle appear on that display.
-- Binding the same display twice returns the same handle.
+- Binding the same display twice returns the same handle, until
+  `luavgl_app_reset` drops the cache and the next app binds a fresh one.
 - One display needs no changes: that is just the default-display case.
 
 ## Getting a handle

@@ -423,6 +423,7 @@ static void luavgl_anim_init(lua_State *L)
 
   rotable_newlib(L, luavgl_anim_methods);
   lua_setfield(L, -2, "__index");
+  luavgl_seal_metatable(L, -1);
 
   lua_pop(L, 1); /* pop metatable */
 }
