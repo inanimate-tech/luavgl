@@ -30,8 +30,17 @@ Upstream's single-display API is unchanged. What the fork adds:
   coroutine, which is freed once it ends. Offered upstream.
 - **An alignment fix.** Setting `align` to an integer no longer discards the
   object's `x`/`y` offsets.
+- **Scripts cannot name memory.** An image source must be one of LVGL's
+  symbols (`lvgl.SYMBOL.*`); luavgl hands LVGL its own static copy. A string
+  of any other bytes, a light userdata or a full userdata raises an error,
+  where LVGL would have read a forged `lv_image_dsc_t` from it. A font must
+  come from `lvgl.Font` or `lvgl.BUILTIN_FONT` (or `luavgl_pushfont` in C),
+  where LVGL would have called a function pointer from any userdata. Build
+  with `LUAVGL_IMAGE_SRC_FILE` to also accept file paths (the CMake simulator
+  build does, for the examples).
 - **Three more widgets.** `lv_line`, `lv_arc`, `lv_scale`.
-- **Two more constant tables.** `lvgl.TEXT_ALIGN` and `lvgl.GRAD_DIR`.
+- **Three more constant tables.** `lvgl.TEXT_ALIGN`, `lvgl.GRAD_DIR` and
+  `lvgl.SYMBOL`.
 - **`lvgl.mirror()`.** Serialises the screen's object tree to short text.
 - **A headless harness.** `simulator/harness.c` renders a script to a BMP, so
   tests in `tests/` can assert on pixels.
