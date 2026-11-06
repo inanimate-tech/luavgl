@@ -506,6 +506,85 @@ static const rotable_Reg grad_dir_const_table[] = {
     {0,              0                          },
 };
 
+/*
+ * LVGL's built-in symbols, as lvgl.SYMBOL.<NAME>. These are also the only
+ * strings luavgl_toimgsrc accepts as an image source: it hands LVGL the
+ * static literal from this table, never the script's own string.
+ */
+static const rotable_Reg symbol_const_table[] = {
+    {.name = "BULLET", .type = LUA_TSTRING, .str = LV_SYMBOL_BULLET},
+    {.name = "AUDIO", .type = LUA_TSTRING, .str = LV_SYMBOL_AUDIO},
+    {.name = "VIDEO", .type = LUA_TSTRING, .str = LV_SYMBOL_VIDEO},
+    {.name = "LIST", .type = LUA_TSTRING, .str = LV_SYMBOL_LIST},
+    {.name = "OK", .type = LUA_TSTRING, .str = LV_SYMBOL_OK},
+    {.name = "CLOSE", .type = LUA_TSTRING, .str = LV_SYMBOL_CLOSE},
+    {.name = "POWER", .type = LUA_TSTRING, .str = LV_SYMBOL_POWER},
+    {.name = "SETTINGS", .type = LUA_TSTRING, .str = LV_SYMBOL_SETTINGS},
+    {.name = "HOME", .type = LUA_TSTRING, .str = LV_SYMBOL_HOME},
+    {.name = "DOWNLOAD", .type = LUA_TSTRING, .str = LV_SYMBOL_DOWNLOAD},
+    {.name = "DRIVE", .type = LUA_TSTRING, .str = LV_SYMBOL_DRIVE},
+    {.name = "REFRESH", .type = LUA_TSTRING, .str = LV_SYMBOL_REFRESH},
+    {.name = "MUTE", .type = LUA_TSTRING, .str = LV_SYMBOL_MUTE},
+    {.name = "VOLUME_MID", .type = LUA_TSTRING, .str = LV_SYMBOL_VOLUME_MID},
+    {.name = "VOLUME_MAX", .type = LUA_TSTRING, .str = LV_SYMBOL_VOLUME_MAX},
+    {.name = "IMAGE", .type = LUA_TSTRING, .str = LV_SYMBOL_IMAGE},
+    {.name = "TINT", .type = LUA_TSTRING, .str = LV_SYMBOL_TINT},
+    {.name = "PREV", .type = LUA_TSTRING, .str = LV_SYMBOL_PREV},
+    {.name = "PLAY", .type = LUA_TSTRING, .str = LV_SYMBOL_PLAY},
+    {.name = "PAUSE", .type = LUA_TSTRING, .str = LV_SYMBOL_PAUSE},
+    {.name = "STOP", .type = LUA_TSTRING, .str = LV_SYMBOL_STOP},
+    {.name = "NEXT", .type = LUA_TSTRING, .str = LV_SYMBOL_NEXT},
+    {.name = "EJECT", .type = LUA_TSTRING, .str = LV_SYMBOL_EJECT},
+    {.name = "LEFT", .type = LUA_TSTRING, .str = LV_SYMBOL_LEFT},
+    {.name = "RIGHT", .type = LUA_TSTRING, .str = LV_SYMBOL_RIGHT},
+    {.name = "PLUS", .type = LUA_TSTRING, .str = LV_SYMBOL_PLUS},
+    {.name = "MINUS", .type = LUA_TSTRING, .str = LV_SYMBOL_MINUS},
+    {.name = "EYE_OPEN", .type = LUA_TSTRING, .str = LV_SYMBOL_EYE_OPEN},
+    {.name = "EYE_CLOSE", .type = LUA_TSTRING, .str = LV_SYMBOL_EYE_CLOSE},
+    {.name = "WARNING", .type = LUA_TSTRING, .str = LV_SYMBOL_WARNING},
+    {.name = "SHUFFLE", .type = LUA_TSTRING, .str = LV_SYMBOL_SHUFFLE},
+    {.name = "UP", .type = LUA_TSTRING, .str = LV_SYMBOL_UP},
+    {.name = "DOWN", .type = LUA_TSTRING, .str = LV_SYMBOL_DOWN},
+    {.name = "LOOP", .type = LUA_TSTRING, .str = LV_SYMBOL_LOOP},
+    {.name = "DIRECTORY", .type = LUA_TSTRING, .str = LV_SYMBOL_DIRECTORY},
+    {.name = "UPLOAD", .type = LUA_TSTRING, .str = LV_SYMBOL_UPLOAD},
+    {.name = "CALL", .type = LUA_TSTRING, .str = LV_SYMBOL_CALL},
+    {.name = "CUT", .type = LUA_TSTRING, .str = LV_SYMBOL_CUT},
+    {.name = "COPY", .type = LUA_TSTRING, .str = LV_SYMBOL_COPY},
+    {.name = "SAVE", .type = LUA_TSTRING, .str = LV_SYMBOL_SAVE},
+    {.name = "BARS", .type = LUA_TSTRING, .str = LV_SYMBOL_BARS},
+    {.name = "ENVELOPE", .type = LUA_TSTRING, .str = LV_SYMBOL_ENVELOPE},
+    {.name = "CHARGE", .type = LUA_TSTRING, .str = LV_SYMBOL_CHARGE},
+    {.name = "PASTE", .type = LUA_TSTRING, .str = LV_SYMBOL_PASTE},
+    {.name = "BELL", .type = LUA_TSTRING, .str = LV_SYMBOL_BELL},
+    {.name = "KEYBOARD", .type = LUA_TSTRING, .str = LV_SYMBOL_KEYBOARD},
+    {.name = "GPS", .type = LUA_TSTRING, .str = LV_SYMBOL_GPS},
+    {.name = "FILE", .type = LUA_TSTRING, .str = LV_SYMBOL_FILE},
+    {.name = "WIFI", .type = LUA_TSTRING, .str = LV_SYMBOL_WIFI},
+    {.name = "BATTERY_FULL",
+     .type = LUA_TSTRING,
+     .str = LV_SYMBOL_BATTERY_FULL},
+    {.name = "BATTERY_3", .type = LUA_TSTRING, .str = LV_SYMBOL_BATTERY_3},
+    {.name = "BATTERY_2", .type = LUA_TSTRING, .str = LV_SYMBOL_BATTERY_2},
+    {.name = "BATTERY_1", .type = LUA_TSTRING, .str = LV_SYMBOL_BATTERY_1},
+    {.name = "BATTERY_EMPTY",
+     .type = LUA_TSTRING,
+     .str = LV_SYMBOL_BATTERY_EMPTY},
+    {.name = "USB", .type = LUA_TSTRING, .str = LV_SYMBOL_USB},
+    {.name = "BLUETOOTH", .type = LUA_TSTRING, .str = LV_SYMBOL_BLUETOOTH},
+    {.name = "TRASH", .type = LUA_TSTRING, .str = LV_SYMBOL_TRASH},
+    {.name = "EDIT", .type = LUA_TSTRING, .str = LV_SYMBOL_EDIT},
+    {.name = "BACKSPACE", .type = LUA_TSTRING, .str = LV_SYMBOL_BACKSPACE},
+    {.name = "SD_CARD", .type = LUA_TSTRING, .str = LV_SYMBOL_SD_CARD},
+    {.name = "NEW_LINE", .type = LUA_TSTRING, .str = LV_SYMBOL_NEW_LINE},
+    {0, 0},
+};
+
+LUALIB_API const rotable_Reg *luavgl_symbols(void)
+{
+  return symbol_const_table;
+}
+
 static const rotable_Reg dir_const_table[] = {
     {.name = "NONE",   .integer = LV_DIR_NONE  },
     {.name = "LEFT",   .integer = LV_DIR_LEFT  },
@@ -636,6 +715,8 @@ static void luavgl_constants_init(lua_State *L)
 
   rotable_setfiled(L, -2, "ALIGN", align_const_table);
   rotable_setfiled(L, -2, "BUILTIN_FONT", builtin_font_const_table);
+  for (const rotable_Reg *f = builtin_font_const_table; f->name; f++)
+    luavgl_font_mint(L, f->ptr);
   rotable_setfiled(L, -2, "LABEL_CONST", label_const_const_table);
   rotable_setfiled(L, -2, "SCR_LOAD_ANIM", scr_load_anim_const_table);
   rotable_setfiled(L, -2, "SCROLLBAR_MODE", scrollbar_mode_const_table);
@@ -654,6 +735,7 @@ static void luavgl_constants_init(lua_State *L)
   rotable_setfiled(L, -2, "ROLLER_MODE", roller_mode_const_table);
 #endif
   rotable_setfiled(L, -2, "KEY", key_const_table);
+  rotable_setfiled(L, -2, "SYMBOL", symbol_const_table);
   /* miscellaneous. */
 
   lua_pushinteger(L, LV_ANIM_REPEAT_INFINITE);

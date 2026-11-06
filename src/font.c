@@ -235,6 +235,88 @@ static const lv_font_t *_luavgl_font_create(lua_State *L, const char *name,
   return NULL;
 }
 
+/*
+ * The fonts a script may set: everything lvgl.Font returned, every
+ * lvgl.BUILTIN_FONT entry, and any font read back from an object. LVGL calls
+ * through function pointers inside an lv_font_t, so a font from anywhere else
+ * (a full userdata, or a light userdata naming some other object) would have
+ * it jump to an address the script chose.
+ *
+ * registry[&luavgl_font_key] = { [lightuserdata(font)] = true }
+ *
+ * luavgl never frees a font, so a pointer stays valid once recorded.
+ */
+static const char luavgl_font_key = 0;
+
+/* Raise "bad argument" for a call argument, or a plain error for a value read
+ * out of a property table (negative idx). Never returns. */
+static int luavgl_bad_value(lua_State *L, int idx, const char *expected)
+{
+  if (idx > 0) {
+    const char *msg =
+        lua_pushfstring(L, "%s, got %s", expected, luaL_typename(L, idx));
+    return luaL_argerror(L, idx, msg);
+  }
+
+  return luaL_error(L, "%s, got %s", expected, luaL_typename(L, idx));
+}
+
+static void luavgl_push_font_table(lua_State *L)
+{
+  lua_pushlightuserdata(L, (void *)&luavgl_font_key);
+  lua_rawget(L, LUA_REGISTRYINDEX);
+  if (lua_istable(L, -1))
+    return;
+
+  lua_pop(L, 1);
+  lua_newtable(L);
+  lua_pushlightuserdata(L, (void *)&luavgl_font_key);
+  lua_pushvalue(L, -2);
+  lua_rawset(L, LUA_REGISTRYINDEX);
+}
+
+static void luavgl_font_mint(lua_State *L, const lv_font_t *font)
+{
+  if (font == NULL)
+    return;
+
+  luavgl_push_font_table(L);
+  lua_pushlightuserdata(L, (void *)font);
+  lua_pushboolean(L, 1);
+  lua_rawset(L, -3);
+  lua_pop(L, 1);
+}
+
+LUALIB_API int luavgl_pushfont(lua_State *L, const lv_font_t *font)
+{
+  if (font == NULL) {
+    lua_pushnil(L);
+    return 1;
+  }
+
+  luavgl_font_mint(L, font);
+  lua_pushlightuserdata(L, (void *)font);
+  return 1;
+}
+
+LUALIB_API const lv_font_t *luavgl_tofont(lua_State *L, int idx)
+{
+  if (lua_type(L, idx) == LUA_TLIGHTUSERDATA) {
+    const lv_font_t *font = lua_touserdata(L, idx);
+    luavgl_push_font_table(L);
+    lua_pushlightuserdata(L, (void *)font);
+    lua_rawget(L, -2);
+    bool minted = lua_toboolean(L, -1);
+    lua_pop(L, 2);
+    if (minted)
+      return font;
+  }
+
+  luavgl_bad_value(L, idx,
+                   "font must come from lvgl.Font or lvgl.BUILTIN_FONT");
+  return NULL;
+}
+
 static char *luavgl_strchr(const char *s, char c)
 {
   while (*s) {
@@ -333,8 +415,7 @@ static int luavgl_font_create(lua_State *L)
 
   free(str);
   if (font) {
-    lua_pushlightuserdata(L, (void *)font);
-    return 1;
+    return luavgl_pushfont(L, font);
   }
 
   return luaL_error(L, "cannot create font");

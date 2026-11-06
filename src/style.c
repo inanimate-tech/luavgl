@@ -9,8 +9,8 @@ typedef struct {
 typedef enum {
   STYLE_TYPE_INT = 1,
   STYLE_TYPE_COLOR,
-  STYLE_TYPE_POINTER, /* a pointer from light-userdata */
-  STYLE_TYPE_IMGSRC,  /* string or light-userdata, similar to pointer */
+  STYLE_TYPE_FONT,   /* a font luavgl handed out, see luavgl_tofont */
+  STYLE_TYPE_IMGSRC, /* an lvgl.SYMBOL string, see luavgl_toimgsrc */
 
   STYLE_TYPE_TABLE, /* value is in table */
   /* Flag of none-simple type. All extended styles are special case. */
@@ -112,7 +112,7 @@ static const struct style_map_s {
     {"arc_opa",              LV_STYLE_ARC_OPA,              STYLE_TYPE_INT                       },
     {"text_color",           LV_STYLE_TEXT_COLOR,           STYLE_TYPE_COLOR                     },
     {"text_opa",             LV_STYLE_TEXT_OPA,             STYLE_TYPE_INT                       },
-    {"text_font",            LV_STYLE_TEXT_FONT,            STYLE_TYPE_POINTER                   }, /* light-userdata */
+    {"text_font",            LV_STYLE_TEXT_FONT,            STYLE_TYPE_FONT                      },
     {"text_letter_space",    LV_STYLE_TEXT_LETTER_SPACE,    STYLE_TYPE_INT                       },
     {"text_line_space",      LV_STYLE_TEXT_LINE_SPACE,      STYLE_TYPE_INT                       },
     {"text_decor",           LV_STYLE_TEXT_DECOR,           STYLE_TYPE_INT                       },
@@ -388,8 +388,8 @@ static int luavgl_set_style_kv(lua_State *L, style_set_cb_t cb, void *args)
     case STYLE_TYPE_COLOR:
       value.color = luavgl_tocolor(L, -1);
       break;
-    case STYLE_TYPE_POINTER:
-      value.ptr = lua_touserdata(L, -1);
+    case STYLE_TYPE_FONT:
+      value.ptr = luavgl_tofont(L, -1);
       break;
     case STYLE_TYPE_IMGSRC:
       value.ptr = luavgl_toimgsrc(L, -1);

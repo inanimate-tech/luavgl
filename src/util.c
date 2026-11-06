@@ -375,20 +375,71 @@ LUALIB_API lv_color_t luavgl_tocolor(lua_State *L, int idx)
   return color;
 }
 
-LUALIB_API const char *luavgl_toimgsrc(lua_State *L, int idx)
+#ifndef LUAVGL_IMAGE_SRC_FILE
+#define LUAVGL_IMAGE_SRC_FILE 0
+#endif
+
+#if LUAVGL_IMAGE_SRC_FILE
+static const char luavgl_imgsrc_key = 0;
+
+/*
+ * registry[&luavgl_imgsrc_key][path] = path. A style keeps its image source
+ * by pointer, so the string must outlive the script's own reference to it.
+ * Returns the anchored copy, which may be an equal string anchored earlier.
+ */
+static const char *luavgl_anchor_path(lua_State *L, int idx)
 {
-  const char *src = NULL;
-  if (lua_isuserdata(L, idx)) {
-    src = lua_touserdata(L, idx);
-    LV_LOG_INFO("set img src to user data: %p", src);
-  } else if (lua_isstring(L, idx)) {
-    src = lua_tostring(L, idx);
-  } else {
-    LV_LOG_ERROR("img src should be string or userdata");
-    return NULL;
+  idx = lua_absindex(L, idx);
+  lua_pushlightuserdata(L, (void *)&luavgl_imgsrc_key);
+  lua_rawget(L, LUA_REGISTRYINDEX);
+  if (!lua_istable(L, -1)) {
+    lua_pop(L, 1);
+    lua_newtable(L);
+    lua_pushlightuserdata(L, (void *)&luavgl_imgsrc_key);
+    lua_pushvalue(L, -2);
+    lua_rawset(L, LUA_REGISTRYINDEX);
   }
 
-  return src;
+  lua_pushvalue(L, idx);
+  lua_rawget(L, -2);
+  if (lua_isnil(L, -1)) {
+    lua_pop(L, 1);
+    lua_pushvalue(L, idx);
+    lua_pushvalue(L, idx);
+    lua_rawset(L, -3);
+    lua_pushvalue(L, idx);
+    lua_rawget(L, -2);
+  }
+
+  const char *path = lua_tostring(L, -1);
+  lua_pop(L, 2); /* still referenced from the registry */
+  return path;
+}
+#endif
+
+LUALIB_API const char *luavgl_toimgsrc(lua_State *L, int idx)
+{
+  if (lua_isnoneornil(L, idx))
+    return NULL;
+
+  if (lua_type(L, idx) == LUA_TSTRING) {
+    size_t len;
+    const char *s = lua_tolstring(L, idx, &len);
+    for (const rotable_Reg *p = luavgl_symbols(); p->name; p++) {
+      if (lv_strcmp(s, p->str) == 0 && lv_strlen(p->str) == len)
+        return p->str; /* static: never the script's own string */
+    }
+
+#if LUAVGL_IMAGE_SRC_FILE
+    /* the first-byte range lv_image_src_get_type reads as a file path */
+    uint8_t first = len ? (uint8_t)s[0] : 0;
+    if (first >= 0x20 && first <= 0x7F)
+      return luavgl_anchor_path(L, idx);
+#endif
+  }
+
+  luavgl_bad_value(L, idx, "image src must be an lvgl.SYMBOL value");
+  return NULL;
 }
 
 LUALIB_API lv_point_t luavgl_topoint(lua_State *L, int idx)
@@ -440,7 +491,7 @@ LUALIB_API lv_property_t luavgl_toproperty(lua_State *L, int idx,
     prop.ptr = lua_tostring(L, idx);
     return prop;
   case LV_PROPERTY_TYPE_FONT:
-    prop.ptr = lua_touserdata(L, idx);
+    prop.ptr = luavgl_tofont(L, idx);
     return prop;
   case LV_PROPERTY_TYPE_BOOL:
     prop.enable = lua_toboolean(L, idx);
@@ -494,8 +545,18 @@ LUALIB_API int luavgl_pushproperty(lua_State *L, const lv_property_t *prop)
   case LV_PROPERTY_TYPE_TEXT:
     lua_pushstring(L, prop->ptr);
     return 1;
-  case LV_PROPERTY_TYPE_IMGSRC:
+  case LV_PROPERTY_TYPE_IMGSRC: {
+    /* a symbol or path reads back as the string a script can set again */
+    lv_image_src_t kind = lv_image_src_get_type(prop->ptr);
+    if (kind == LV_IMAGE_SRC_SYMBOL || kind == LV_IMAGE_SRC_FILE)
+      lua_pushstring(L, prop->ptr);
+    else
+      lua_pushlightuserdata(L, (void *)prop->ptr);
+    return 1;
+  }
   case LV_PROPERTY_TYPE_FONT:
+    /* a font LVGL holds is a real font: a script may set it elsewhere */
+    return luavgl_pushfont(L, prop->ptr);
   case LV_PROPERTY_TYPE_POINTER:
     lua_pushlightuserdata(L, (void *)prop->ptr);
     return 1;
@@ -567,8 +628,11 @@ LUALIB_API int luavgl_set_property_array(lua_State *L, void *obj,
     } else if (p->type == SETTER_TYPE_STACK) {
       p->setter_stack(obj, L);
     } else if (p->type == SETTER_TYPE_POINTER) {
-      void *data = lua_touserdata(L, -1);
-      p->setter_pointer(obj, data);
+      /* light userdata only: a full userdata's bytes belong to the script */
+      if (lua_type(L, -1) != LUA_TLIGHTUSERDATA)
+        return luaL_error(L, "%s: expected light userdata, got %s", key,
+                          luaL_typename(L, -1));
+      p->setter_pointer(obj, lua_touserdata(L, -1));
     } else {
       LV_LOG_ERROR("unsupported type: %d", p->type);
     }

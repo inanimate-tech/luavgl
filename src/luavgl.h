@@ -238,11 +238,40 @@ LUALIB_API lv_color_t luavgl_tocolor(lua_State *L, int idx);
 /**
  * @brief Convert value to lvgl image source
  *
- * Supported image format:
- *    [1]: image path string, e.g. "/resource/bg.png"
- *    [2]: image source lightuserdata
+ * Accepted:
+ *    [1]: one of LVGL's symbol strings (lvgl.SYMBOL.*), returned as the
+ *         static literal from luavgl_symbols(), never the script's string;
+ *    [2]: nil, returned as NULL (no image);
+ *    [3]: with LUAVGL_IMAGE_SRC_FILE, a file path (first byte printable
+ *         ASCII), kept alive in the registry for the lua_State's life.
+ *
+ * Anything else raises a Lua error. LVGL reads a source whose first byte is
+ * below 0x20 as a pointer to an lv_image_dsc_t, so passing a script's bytes
+ * or a light userdata through would let a script name any memory as pixels.
  */
 LUALIB_API const char *luavgl_toimgsrc(lua_State *L, int idx);
+
+/**
+ * @brief LVGL's symbol strings (LV_SYMBOL_*), the table behind lvgl.SYMBOL
+ * and the only strings luavgl_toimgsrc accepts. Terminated by an entry whose
+ * name is NULL; each entry's `str` is the symbol.
+ */
+LUALIB_API const rotable_Reg *luavgl_symbols(void);
+
+/**
+ * @brief Push a font as a light userdata a script may pass to text_font.
+ * lvgl.Font and lvgl.BUILTIN_FONT fonts are already recorded; an embedder
+ * that hands a script a font of its own pushes it with this. The font must
+ * outlive the lua_State. Pushes nil for NULL.
+ */
+LUALIB_API int luavgl_pushfont(lua_State *L, const lv_font_t *font);
+
+/**
+ * @brief Read a font at idx, which must be one luavgl handed out (lvgl.Font,
+ * lvgl.BUILTIN_FONT, a font read back from an object, or luavgl_pushfont).
+ * Raises a Lua error otherwise.
+ */
+LUALIB_API const lv_font_t *luavgl_tofont(lua_State *L, int idx);
 
 /**
  * @brief Convert value to lvgl point
