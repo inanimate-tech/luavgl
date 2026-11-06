@@ -109,7 +109,8 @@ void luavgl_base_theme_init(lv_display_t *disp);
  * multi-display). The handle exposes the widget constructors parented to
  * that display's active screen, plus screen()/clean()/mirror()/HOR_RES()/
  * VER_RES()/set_default()/set_theme{} — everything else falls through to
- * the plain module. Binding the same display twice returns the same handle.
+ * the plain module. Binding the same display twice returns the same handle,
+ * until luavgl_app_reset drops the cache. The handle's metatable is protected.
  * Initialises the lvgl module if needed (idempotent). See docs/display-bind.md.
  *
  * @return 1 (the handle is on the stack)
@@ -125,6 +126,8 @@ LUALIB_API int luavgl_bind_display(lua_State *L, lv_display_t *disp);
  *   - every Lua anim is deleted, without running its done_cb
  *   - every Lua theme is uninstalled and its styles released
  *   - every Lua Style is unpinned
+ *   - every cached display handle is dropped: the next luavgl_bind_display
+ *     builds a fresh one, without what the outgoing app wrote into its own
  *   - Lua-created objects on each display's top and system layers, and
  *     Lua-created screens that are not active, are deleted
  * Call it after deleting the app's objects on the active screens (styles
@@ -177,6 +180,8 @@ LUALIB_API luavgl_obj_t *luavgl_to_lobj(lua_State *L, int idx);
 
 /**
  * @brief Create metatable using lightuserdata as key.
+ * The metatable is protected (__metatable = false): getmetatable() from Lua
+ * returns false, so a script cannot change it for every value of the type.
  * @param L
  * @param key lightuserdata key
  * @param name optional name for this metatable
@@ -194,7 +199,8 @@ LUALIB_API int luavgl_createmetatable(lua_State *L, const void *key,
 LUALIB_API int luavgl_getmetatable(lua_State *L, const void *key);
 
 /**
- * @brief Create metatable for specified object class
+ * @brief Create metatable for specified object class, protected as
+ * luavgl_createmetatable's is.
  *
  * @param L
  * @param clz object class

@@ -8,6 +8,7 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 static void dumpstack(lua_State *L);
 static void dumptable(lua_State *L, int index);
@@ -15,6 +16,7 @@ static void dumptable(lua_State *L, int index);
 /* metatable */
 int luavgl_obj_getmetatable(lua_State *L, const lv_obj_class_t *clz);
 int luavgl_obj_setmetatable(lua_State *L, int idx, const lv_obj_class_t *clz);
+static void luavgl_protect_metatable(lua_State *L, int idx);
 
 static void luavgl_obj_remove_event_all(lua_State *L, luavgl_obj_t *obj);
 

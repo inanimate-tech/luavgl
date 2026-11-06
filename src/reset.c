@@ -128,5 +128,12 @@ LUALIB_API void luavgl_app_reset(lua_State *L)
   lua_pushnil(L);
   lua_rawset(L, LUA_REGISTRYINDEX);
 
+  /* every cached display handle: a handle is a plain table, and whatever the
+   * outgoing app wrote into it must not reach the next app, which binds a
+   * fresh one */
+  lua_pushstring(L, "luavgl.bound");
+  lua_pushnil(L);
+  lua_rawset(L, LUA_REGISTRYINDEX);
+
   ctx->resetting = false;
 }

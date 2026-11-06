@@ -122,6 +122,7 @@ LUALIB_API int luaopen_lvgl(lua_State *L)
   lua_pushstring(L, "__gc");
   lua_pushcfunction(L, ctx->root ? root_clean : root_gc);
   lua_settable(L, -3);
+  luavgl_protect_metatable(L, -1);
   lua_pop(L, 1);
 
   lv_obj_t *root = ctx->root;

@@ -25,6 +25,10 @@ Upstream's single-display API is unchanged. What the fork adds:
   size falls back to the nearest one compiled in.
 - **Safe handles.** Deleting an object from C invalidates the Lua handles that
   pointed at it. Orphaned animations delete themselves.
+- **Protected shared tables.** `getmetatable` on a luavgl value returns `false`,
+  `lvgl.__index` and `obj.__index` do not hand out the table of widget
+  constructors, and `luavgl_app_reset` drops the cached display handles, so a
+  script cannot change what every later script on the state gets.
 - **Callbacks on the main thread.** An Anim, Timer or event callback
   registered from a coroutine calls back on the main thread, not on the
   coroutine, which is freed once it ends. Offered upstream.

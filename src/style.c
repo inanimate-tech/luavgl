@@ -784,6 +784,7 @@ static void luavgl_style_init(lua_State *L)
 
   rotable_newlib(L, luavgl_style_methods); /* methods belong to this type */
   lua_setfield(L, -2, "__index");
+  luavgl_protect_metatable(L, -1);
 
   lua_pop(L, 1); /* pop __index table */
 }
