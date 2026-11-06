@@ -331,7 +331,7 @@ static int luavgl_font_create(lua_State *L)
     name = end + 1; /* next */
   }
 
-  free(str);
+  lv_free(str);
   if (font) {
     lua_pushlightuserdata(L, (void *)font);
     return 1;
