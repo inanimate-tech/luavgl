@@ -940,7 +940,7 @@ function img:set(p)
 end
 
 --- set image source
---- @param src string image source path
+--- @param src ImgSrc a symbol string
 --- @return nil
 function img:set_src(src)
 end
@@ -961,8 +961,7 @@ end
 
 --- get image size, return w,h
 --- w, h = img:get_img_size()
---- w, h = img:get_img_size("/path/to/this/image.png")
---- @param src ? string
+--- @param src ? ImgSrc
 --- @return integer, integer
 function img:get_img_size(src)
 end
@@ -1205,7 +1204,9 @@ function timer:ready()
 end
 
 --[[
-Font is a light userdata that can be uset to set style text_font.
+Font is a light userdata that can be used to set style text_font. Only
+fonts from lvgl.Font or lvgl.BUILTIN_FONT (or read back from an object) are
+accepted; any other value raises an error.
 ]]
 --- @class Font
 ---
@@ -1286,7 +1287,7 @@ end
 --- @field bg_main_stop integer
 --- @field bg_grad_stop integer
 --- @field bg_dither_mode integer
---- @field bg_img_src integer
+--- @field bg_image_src ImgSrc
 --- @field bg_img_opa integer
 --- @field bg_img_recolor integer
 --- @field bg_img_recolor_opa integer
@@ -1319,7 +1320,7 @@ end
 --- @field arc_rounded integer
 --- @field arc_color integer | string
 --- @field arc_opa integer
---- @field arc_image_src integer
+--- @field arc_image_src ImgSrc
 --- @field text_color integer | string
 --- @field text_opa integer
 --- @field text_font Font | BuiltinFont
@@ -1361,7 +1362,7 @@ end
 
 --- Image style
 --- @class ImageStyle :StyleProp
---- @field src string
+--- @field src ImgSrc
 --- @field offset_x integer offset of image
 --- @field offset_y integer
 --- @field angle integer
@@ -1457,7 +1458,11 @@ end
 
 
 ---
---- @alias ImgSrc string | lightuserdata
+--- A string LVGL draws as a symbol (first byte 0x80 or above: an
+--- LV_SYMBOL_* value, a symbol followed by text, a custom font's glyph);
+--- anything else raises an error. (A build with LUAVGL_IMAGE_SRC_FILE also
+--- accepts a file path.)
+--- @alias ImgSrc string
 
 --- @alias flexAlignOptions "flex-start" | "flex-end" | "center" | "space-between" | "space-around" | "space-evenly"
 ---

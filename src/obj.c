@@ -57,6 +57,9 @@ static void obj_delete_cb(lv_event_t *e)
 
   lv_array_deinit(&lobj->events);
 
+  /* LVGL is done with the strings it held by pointer for this object. */
+  luavgl_anchor_release(L, lobj->obj);
+
   /* remove userdata from registry. */
   lua_checkstack(L, 2);
   lua_pushlightuserdata(L, lobj->obj);
@@ -673,6 +676,10 @@ static int obj_property_lvgl(lua_State *L, lv_obj_t *obj, lv_prop_id_t id,
   /* A valid lvgl property, it must success. */
   if (set) {
     prop = luavgl_toproperty(L, -1, id);
+    if (LV_PROPERTY_ID_TYPE(id) == LV_PROPERTY_TYPE_IMGSRC) {
+      /* an image source LVGL may keep by pointer (a style property does) */
+      prop.ptr = luavgl_anchor_string(L, obj, name, -1);
+    }
     lv_result_t res = lv_obj_set_property(obj, &prop);
     if (res == LV_RESULT_OK) {
       return 0;
@@ -1047,6 +1054,32 @@ static int obj_meta__gc(lua_State *L)
   return 0;
 }
 
+/**
+ * widgets.__index. Upvalue 1: the widgets table. Returns a constructor from
+ * it, luavgl's own or one an embedder registered there (see "Custom Widget"
+ * in the README), and never a "__" key. Keep it a function: the usual
+ * `widgets.__index = widgets` lets `lvgl.__index` and `obj.__index` hand a
+ * script the table, and what it writes there reaches every later script on
+ * the state.
+ */
+static int widgets_meta__index(lua_State *L)
+{
+  if (lua_type(L, 2) != LUA_TSTRING) {
+    lua_pushnil(L);
+    return 1;
+  }
+
+  const char *key = lua_tostring(L, 2);
+  if (key[0] == '_' && key[1] == '_') {
+    lua_pushnil(L);
+    return 1;
+  }
+
+  lua_pushvalue(L, 2);
+  lua_rawget(L, lua_upvalueindex(1));
+  return 1;
+}
+
 static const luaL_Reg obj_meta_methods[] = {
     {"__index",    obj_meta__index   },
     {"__newindex", obj_meta__newindex},
@@ -1062,10 +1095,15 @@ static void luavgl_obj_init(lua_State *L)
   luaL_setfuncs(L, obj_meta_methods, 0);
   lua_pop(L, 1);
 
-  /* 2. Widget creation methods table */
+  /* 2. Widget creation methods table: the metatable of the module, and where
+   * every object's method lookup ends. */
   luaL_newmetatable(L, "widgets");
   luaL_setfuncs(L, widget_create_methods, 0);
-  lua_setfield(L, -1, "__index");
+  lua_pushvalue(L, -1);
+  lua_pushcclosure(L, widgets_meta__index, 1);
+  lua_setfield(L, -2, "__index");
+  luavgl_protect_metatable(L, -1);
+  lua_pop(L, 1);
 
   /* 3. Base lv_obj metatable */
   luavgl_obj_newmetatable(L, &lv_obj_class, "lv_obj", luavgl_obj_methods);

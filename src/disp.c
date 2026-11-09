@@ -295,6 +295,7 @@ static void luavgl_disp_init(lua_State *L)
 
   rotable_newlib(L, disp_methods);
   lua_setfield(L, -2, "__index");
+  luavgl_protect_metatable(L, -1);
 
   lua_pop(L, 1); /* pop metatable */
 

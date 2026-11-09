@@ -636,6 +636,8 @@ static void luavgl_constants_init(lua_State *L)
 
   rotable_setfiled(L, -2, "ALIGN", align_const_table);
   rotable_setfiled(L, -2, "BUILTIN_FONT", builtin_font_const_table);
+  for (const rotable_Reg *f = builtin_font_const_table; f->name; f++)
+    luavgl_font_mint(L, f->ptr);
   rotable_setfiled(L, -2, "LABEL_CONST", label_const_const_table);
   rotable_setfiled(L, -2, "SCR_LOAD_ANIM", scr_load_anim_const_table);
   rotable_setfiled(L, -2, "SCROLLBAR_MODE", scrollbar_mode_const_table);

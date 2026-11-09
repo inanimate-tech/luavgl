@@ -25,11 +25,27 @@ Upstream's single-display API is unchanged. What the fork adds:
   size falls back to the nearest one compiled in.
 - **Safe handles.** Deleting an object from C invalidates the Lua handles that
   pointed at it. Orphaned animations delete themselves.
+- **Protected shared tables.** `getmetatable` on a luavgl value returns `false`,
+  `lvgl.__index` and `obj.__index` do not hand out the table of widget
+  constructors, and `luavgl_app_reset` drops the cached display handles, so a
+  script cannot change what every later script on the state gets.
 - **Callbacks on the main thread.** An Anim, Timer or event callback
   registered from a coroutine calls back on the main thread, not on the
   coroutine, which is freed once it ends. Offered upstream.
 - **An alignment fix.** Setting `align` to an integer no longer discards the
   object's `x`/`y` offsets.
+- **Scripts cannot name memory.** An image source (`src`, `bg_image_src`,
+  `arc_image_src`, a dropdown's `symbol`, a list button's icon) must be a
+  string LVGL draws as a symbol: one whose first byte is 0x80 or above, such
+  as an `LV_SYMBOL_*` value, a symbol followed by text, or a glyph from a
+  custom symbol font. Anything else raises an error, where LVGL would have
+  read a forged `lv_image_dsc_t` from it. Where LVGL keeps the source by
+  pointer (a style, a dropdown), luavgl keeps the string alive for as long as
+  that object or style lives. A font must come from `lvgl.Font` or
+  `lvgl.BUILTIN_FONT` (or `luavgl_pushfont` in C), where LVGL would have
+  called a function pointer from any userdata. Build with
+  `LUAVGL_IMAGE_SRC_FILE` to also accept file paths (the CMake simulator
+  build does, for the examples).
 - **Three more widgets.** `lv_line`, `lv_arc`, `lv_scale`.
 - **Two more constant tables.** `lvgl.TEXT_ALIGN` and `lvgl.GRAD_DIR`.
 - **`lvgl.mirror()`.** Serialises the screen's object tree to short text.

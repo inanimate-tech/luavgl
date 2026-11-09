@@ -109,7 +109,8 @@ void luavgl_base_theme_init(lv_display_t *disp);
  * multi-display). The handle exposes the widget constructors parented to
  * that display's active screen, plus screen()/clean()/mirror()/HOR_RES()/
  * VER_RES()/set_default()/set_theme{} — everything else falls through to
- * the plain module. Binding the same display twice returns the same handle.
+ * the plain module. Binding the same display twice returns the same handle,
+ * until luavgl_app_reset drops the cache. The handle's metatable is protected.
  * Initialises the lvgl module if needed (idempotent). See docs/display-bind.md.
  *
  * @return 1 (the handle is on the stack)
@@ -125,6 +126,8 @@ LUALIB_API int luavgl_bind_display(lua_State *L, lv_display_t *disp);
  *   - every Lua anim is deleted, without running its done_cb
  *   - every Lua theme is uninstalled and its styles released
  *   - every Lua Style is unpinned
+ *   - every cached display handle is dropped: the next luavgl_bind_display
+ *     builds a fresh one, without what the outgoing app wrote into its own
  *   - Lua-created objects on each display's top and system layers, and
  *     Lua-created screens that are not active, are deleted
  * Call it after deleting the app's objects on the active screens (styles
@@ -177,6 +180,8 @@ LUALIB_API luavgl_obj_t *luavgl_to_lobj(lua_State *L, int idx);
 
 /**
  * @brief Create metatable using lightuserdata as key.
+ * The metatable is protected (__metatable = false): getmetatable() from Lua
+ * returns false, so a script cannot change it for every value of the type.
  * @param L
  * @param key lightuserdata key
  * @param name optional name for this metatable
@@ -194,7 +199,8 @@ LUALIB_API int luavgl_createmetatable(lua_State *L, const void *key,
 LUALIB_API int luavgl_getmetatable(lua_State *L, const void *key);
 
 /**
- * @brief Create metatable for specified object class
+ * @brief Create metatable for specified object class, protected as
+ * luavgl_createmetatable's is.
  *
  * @param L
  * @param clz object class
@@ -238,11 +244,38 @@ LUALIB_API lv_color_t luavgl_tocolor(lua_State *L, int idx);
 /**
  * @brief Convert value to lvgl image source
  *
- * Supported image format:
- *    [1]: image path string, e.g. "/resource/bg.png"
- *    [2]: image source lightuserdata
+ * Accepted, as LVGL's lv_image_src_get_type classifies the string:
+ *    [1]: a symbol: a string whose first byte is 0x80 or above, which LVGL
+ *         only ever draws as text (LV_SYMBOL_*, a glyph from a custom symbol
+ *         font, a symbol followed by text);
+ *    [2]: nil, returned as NULL (no image);
+ *    [3]: with LUAVGL_IMAGE_SRC_FILE, a file path (first byte printable
+ *         ASCII).
+ *
+ * Anything else raises a Lua error: LVGL reads any other source, the empty
+ * string included, as a pointer to an lv_image_dsc_t, so passing a script's
+ * bytes or a userdata through would let a script name any memory as pixels.
+ *
+ * Returns the script's own string, valid while it stays on the stack. A
+ * caller that hands it to something keeping the pointer (a style, a
+ * dropdown's symbol) must anchor it to that owner; luavgl's own setters do.
  */
 LUALIB_API const char *luavgl_toimgsrc(lua_State *L, int idx);
+
+/**
+ * @brief Push a font as a light userdata a script may pass to text_font.
+ * lvgl.Font and lvgl.BUILTIN_FONT fonts are already recorded; an embedder
+ * that hands a script a font of its own pushes it with this. The font must
+ * outlive the lua_State. Pushes nil for NULL.
+ */
+LUALIB_API int luavgl_pushfont(lua_State *L, const lv_font_t *font);
+
+/**
+ * @brief Read a font at idx, which must be one luavgl handed out (lvgl.Font,
+ * lvgl.BUILTIN_FONT, a font read back from an object, or luavgl_pushfont).
+ * Raises a Lua error otherwise.
+ */
+LUALIB_API const lv_font_t *luavgl_tofont(lua_State *L, int idx);
 
 /**
  * @brief Convert value to lvgl point

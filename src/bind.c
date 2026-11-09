@@ -395,6 +395,7 @@ LUALIB_API int luavgl_bind_display(lua_State *L, lv_display_t *disp)
   lua_createtable(L, 0, 1);
   lua_pushvalue(L, module);
   lua_setfield(L, -2, "__index");
+  luavgl_protect_metatable(L, -1);
   lua_setmetatable(L, handle);
 
   /* cache it */

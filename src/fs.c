@@ -366,6 +366,7 @@ static void luavgl_fs_init(lua_State *L)
 
   rotable_newlib(L, fs_methods);
   lua_setfield(L, -2, "__index");
+  luavgl_protect_metatable(L, -1);
 
   lua_pop(L, 1); /* pop metatable */
 
@@ -375,6 +376,7 @@ static void luavgl_fs_init(lua_State *L)
 
   rotable_newlib(L, dir_methods);
   lua_setfield(L, -2, "__index");
+  luavgl_protect_metatable(L, -1);
 
   lua_pop(L, 1); /* pop metatable */
 
