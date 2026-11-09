@@ -2,26 +2,59 @@ name: CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
+
+# Read-only token, whatever the repository default is. Pull requests from
+# forks get no secrets under `pull_request`; never switch this workflow to
+# `pull_request_target`, which runs fork code with the base repository's
+# token and secrets.
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Build on ubuntu-latest
+    name: Build and test on ubuntu-latest
+    timeout-minutes: 30
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
       with:
         submodules: recursive
-
-    - uses: ammaraskar/gcc-problem-matcher@master
+        persist-credentials: false
 
     - name: Install prerequisites
       run: |
           sudo apt update
-          sudo apt install gcc cmake ninja-build libpng-dev libfreetype6-dev libsdl2-dev lua5.3 liblua5.3-dev -y
+          sudo apt install gcc cmake ninja-build libpng-dev libfreetype6-dev libsdl2-dev lua5.4 liblua5.4-dev -y
+
     - name: Build
       run: |
           cmake -Bbuild -GNinja -DCMAKE_BUILD_TYPE=Debug -DLV_USE_LIBPNG=ON -DLV_USE_FREETYPE=ON .
           ninja -Cbuild
+          grep -E '^LUA_(INCLUDE_DIR|LIBRARY)' build/CMakeCache.txt
+
+    # The harness is built with AddressSanitizer (BUILD_SIMULATOR). SDL's
+    # dummy video driver lets it open its window on a runner with no display.
+    - name: Test
+      working-directory: build
+      env:
+        SDL_VIDEODRIVER: dummy
+      run: |
+          fail=0
+          for t in ../tests/check-*.sh; do
+            echo "::group::$t"
+            if bash "$t"; then
+              echo "::endgroup::"
+            else
+              echo "::endgroup::"
+              echo "::error::$t failed"
+              fail=1
+            fi
+          done
+          exit $fail

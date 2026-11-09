@@ -197,7 +197,9 @@ int main(int argc, char **argv)
   if (out_bmp) {
     lv_draw_buf_t *snap = lv_snapshot_take(lv_scr_act(), LV_COLOR_FORMAT_ARGB8888);
     if (snap == NULL) { printf("HARNESS_ERROR: snapshot failed\n"); return 3; }
-    if (write_bmp(out_bmp, snap) != 0) { printf("HARNESS_ERROR: bmp write failed\n"); return 3; }
+    int written = write_bmp(out_bmp, snap);
+    lv_draw_buf_destroy(snap);
+    if (written != 0) { printf("HARNESS_ERROR: bmp write failed\n"); return 3; }
     printf("HARNESS_OK: wrote %s\n", out_bmp);
   } else {
     printf("HARNESS_OK\n");
