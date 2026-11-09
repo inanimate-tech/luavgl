@@ -164,7 +164,7 @@ git submodule update --init
 To run simulator on PC, make sure `lua` header is available, you may need to install below packages.
 
 ```
-sudo apt install libsdl2-dev lua5.3 liblua5.3-dev
+sudo apt install libsdl2-dev lua5.4 liblua5.4-dev
 ```
 
 Both lua5.3 and lua5.4 are supported. Versions below 5.2 has not been verified but should work through `deps/lua-compat-5.3`.
