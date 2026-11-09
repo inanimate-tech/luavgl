@@ -62,8 +62,28 @@ static int dropdown_selected_str(lua_State *L, lv_obj_t *obj, bool set)
   return 1;
 }
 
+/* LVGL declares the symbol a TEXT property, but draws it as an image source
+ * and keeps the pointer: check it as one, and anchor it to the dropdown. */
+static int dropdown_symbol(lua_State *L, lv_obj_t *obj, bool set)
+{
+  if (set) {
+    luavgl_toimgsrc(L, -1);
+    lv_dropdown_set_symbol(obj, luavgl_anchor_string(L, obj, "symbol", -1));
+    return 0;
+  }
+
+  const char *symbol = lv_dropdown_get_symbol(obj);
+  lv_image_src_t kind = lv_image_src_get_type(symbol);
+  if (symbol && (kind == LV_IMAGE_SRC_SYMBOL || kind == LV_IMAGE_SRC_FILE))
+    lua_pushstring(L, symbol);
+  else
+    lua_pushnil(L);
+  return 1;
+}
+
 static const luavgl_property_ops_t dropdown_property_ops[] = {
     {.name = "selected_str", .ops = dropdown_selected_str},
+    {.name = "symbol",       .ops = dropdown_symbol      },
 };
 
 static const luavgl_table_t

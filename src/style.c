@@ -9,8 +9,8 @@ typedef struct {
 typedef enum {
   STYLE_TYPE_INT = 1,
   STYLE_TYPE_COLOR,
-  STYLE_TYPE_POINTER, /* a pointer from light-userdata */
-  STYLE_TYPE_IMGSRC,  /* string or light-userdata, similar to pointer */
+  STYLE_TYPE_FONT,   /* a font luavgl handed out, see luavgl_tofont */
+  STYLE_TYPE_IMGSRC, /* a symbol (or path), see luavgl_toimgsrc */
 
   STYLE_TYPE_TABLE, /* value is in table */
   /* Flag of none-simple type. All extended styles are special case. */
@@ -112,7 +112,7 @@ static const struct style_map_s {
     {"arc_opa",              LV_STYLE_ARC_OPA,              STYLE_TYPE_INT                       },
     {"text_color",           LV_STYLE_TEXT_COLOR,           STYLE_TYPE_COLOR                     },
     {"text_opa",             LV_STYLE_TEXT_OPA,             STYLE_TYPE_INT                       },
-    {"text_font",            LV_STYLE_TEXT_FONT,            STYLE_TYPE_POINTER                   }, /* light-userdata */
+    {"text_font",            LV_STYLE_TEXT_FONT,            STYLE_TYPE_FONT                      },
     {"text_letter_space",    LV_STYLE_TEXT_LETTER_SPACE,    STYLE_TYPE_INT                       },
     {"text_line_space",      LV_STYLE_TEXT_LINE_SPACE,      STYLE_TYPE_INT                       },
     {"text_decor",           LV_STYLE_TEXT_DECOR,           STYLE_TYPE_INT                       },
@@ -351,10 +351,13 @@ static inline bool luavgl_is_style_inherit(lua_State *L)
  * internal used API, called from style:set()
  * key: stack[-2]
  * value: stack[-1]
+ * owner, selector: what keeps the value (a luavgl_style_t, or an lv_obj_t's
+ * local style for that selector), for a string LVGL holds by pointer.
  *
  * @return 0 if succeed, -1 if failed.
  */
-static int luavgl_set_style_kv(lua_State *L, style_set_cb_t cb, void *args)
+static int luavgl_set_style_kv(lua_State *L, style_set_cb_t cb, void *args,
+                               const void *owner, int selector)
 {
   const char *key = lua_tostring(L, -2);
   if (key == NULL) {
@@ -388,12 +391,17 @@ static int luavgl_set_style_kv(lua_State *L, style_set_cb_t cb, void *args)
     case STYLE_TYPE_COLOR:
       value.color = luavgl_tocolor(L, -1);
       break;
-    case STYLE_TYPE_POINTER:
-      value.ptr = lua_touserdata(L, -1);
+    case STYLE_TYPE_FONT:
+      value.ptr = luavgl_tofont(L, -1);
       break;
-    case STYLE_TYPE_IMGSRC:
-      value.ptr = luavgl_toimgsrc(L, -1);
+    case STYLE_TYPE_IMGSRC: {
+      /* a style keeps the source by pointer: anchor it to the owner */
+      char anchor[48];
+      luavgl_toimgsrc(L, -1);
+      lv_snprintf(anchor, sizeof(anchor), "%s:%x", p->name, selector);
+      value.ptr = luavgl_anchor_string(L, owner, anchor, -1);
       break;
+    }
     case STYLE_TYPE_TABLE:
       break;
     default:
@@ -516,9 +524,9 @@ static int luavgl_style_set(lua_State *L)
     bool inherit = luavgl_is_style_inherit(L);
 
     luavgl_set_style_kv(L, inherit ? lv_style_set_inherit_cb : lv_style_set_cb,
-                        s);
+                        s, s, 0);
 #else
-    luavgl_set_style_kv(L, lv_style_set_cb, s);
+    luavgl_set_style_kv(L, lv_style_set_cb, s, s, 0);
 #endif
 
     lua_pop(L, 1); /* remove value, keep the key to continue. */
@@ -618,6 +626,7 @@ static int luavgl_style_gc(lua_State *L)
 {
   luavgl_style_t *s = luavgl_check_style(L, 1);
   lv_style_reset(&s->style);
+  luavgl_anchor_release(L, s);
   free(s);
   LV_LOG_INFO("gc style:%p", s);
   return 0;
@@ -661,9 +670,10 @@ static int luavgl_obj_set_style_kv(lua_State *L, lv_obj_t *obj, int selector)
   bool inherit = luavgl_is_style_inherit(L);
 
   return luavgl_set_style_kv(
-      L, inherit ? obj_style_inherit_set_cb : obj_style_set_cb, &info);
+      L, inherit ? obj_style_inherit_set_cb : obj_style_set_cb, &info, obj,
+      selector);
 #else
-  return luavgl_set_style_kv(L, obj_style_set_cb, &info);
+  return luavgl_set_style_kv(L, obj_style_set_cb, &info, obj, selector);
 #endif
 }
 

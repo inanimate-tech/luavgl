@@ -57,6 +57,9 @@ static void obj_delete_cb(lv_event_t *e)
 
   lv_array_deinit(&lobj->events);
 
+  /* LVGL is done with the strings it held by pointer for this object. */
+  luavgl_anchor_release(L, lobj->obj);
+
   /* remove userdata from registry. */
   lua_checkstack(L, 2);
   lua_pushlightuserdata(L, lobj->obj);
@@ -673,6 +676,10 @@ static int obj_property_lvgl(lua_State *L, lv_obj_t *obj, lv_prop_id_t id,
   /* A valid lvgl property, it must success. */
   if (set) {
     prop = luavgl_toproperty(L, -1, id);
+    if (LV_PROPERTY_ID_TYPE(id) == LV_PROPERTY_TYPE_IMGSRC) {
+      /* an image source LVGL may keep by pointer (a style property does) */
+      prop.ptr = luavgl_anchor_string(L, obj, name, -1);
+    }
     lv_result_t res = lv_obj_set_property(obj, &prop);
     if (res == LV_RESULT_OK) {
       return 0;

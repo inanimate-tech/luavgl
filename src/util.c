@@ -375,20 +375,106 @@ LUALIB_API lv_color_t luavgl_tocolor(lua_State *L, int idx)
   return color;
 }
 
+#ifndef LUAVGL_IMAGE_SRC_FILE
+#define LUAVGL_IMAGE_SRC_FILE 0
+#endif
+
 LUALIB_API const char *luavgl_toimgsrc(lua_State *L, int idx)
 {
-  const char *src = NULL;
-  if (lua_isuserdata(L, idx)) {
-    src = lua_touserdata(L, idx);
-    LV_LOG_INFO("set img src to user data: %p", src);
-  } else if (lua_isstring(L, idx)) {
-    src = lua_tostring(L, idx);
-  } else {
-    LV_LOG_ERROR("img src should be string or userdata");
+  if (lua_isnoneornil(L, idx))
     return NULL;
+
+  /* LVGL decides what a source is from its first byte. A symbol (0x80 and
+   * up) is only ever drawn as text, and a path (printable ASCII) is opened
+   * through LV_FS. Anything else, the empty string included, it reads as a
+   * pointer to an lv_image_dsc_t, so a script's bytes would name memory. */
+  if (lua_type(L, idx) == LUA_TSTRING) {
+    const char *src = lua_tostring(L, idx);
+    switch (lv_image_src_get_type(src)) {
+    case LV_IMAGE_SRC_SYMBOL:
+      return src;
+#if LUAVGL_IMAGE_SRC_FILE
+    case LV_IMAGE_SRC_FILE:
+      return src;
+#endif
+    default:
+      break;
+    }
   }
 
-  return src;
+  luavgl_bad_value(L, idx,
+                   LUAVGL_IMAGE_SRC_FILE
+                       ? "image src must be a symbol or a file path"
+                       : "image src must be a symbol");
+  return NULL;
+}
+
+/*
+ * Strings LVGL keeps by pointer: a style's image source, a dropdown's symbol.
+ * The script's own reference may go at any time, so the string is anchored
+ * to whatever holds the pointer:
+ *
+ *   registry[&luavgl_anchor_key] = {
+ *     [lightuserdata(owner)] = { [key] = string },
+ *   }
+ *
+ * Each (owner, key) holds one string, which the next value replaces, and an
+ * owner's strings go when it does (obj_delete_cb, the style's __gc). So the
+ * table holds no more than LVGL can still reach.
+ */
+static const char luavgl_anchor_key = 0;
+
+static const char *luavgl_anchor_string(lua_State *L, const void *owner,
+                                        const char *key, int idx)
+{
+  idx = lua_absindex(L, idx);
+  lua_checkstack(L, 4);
+
+  lua_pushlightuserdata(L, (void *)&luavgl_anchor_key);
+  lua_rawget(L, LUA_REGISTRYINDEX);
+  if (!lua_istable(L, -1)) {
+    lua_pop(L, 1);
+    lua_newtable(L);
+    lua_pushlightuserdata(L, (void *)&luavgl_anchor_key);
+    lua_pushvalue(L, -2);
+    lua_rawset(L, LUA_REGISTRYINDEX);
+  }
+
+  lua_pushlightuserdata(L, (void *)owner);
+  lua_rawget(L, -2);
+  if (!lua_istable(L, -1)) {
+    lua_pop(L, 1);
+    lua_newtable(L);
+    lua_pushlightuserdata(L, (void *)owner);
+    lua_pushvalue(L, -2);
+    lua_rawset(L, -4);
+  }
+
+  const char *s = NULL;
+  lua_pushstring(L, key);
+  if (lua_type(L, idx) == LUA_TSTRING) {
+    lua_pushvalue(L, idx);
+    s = lua_tostring(L, -1); /* the same string object the table now holds */
+  } else {
+    lua_pushnil(L);
+  }
+  lua_rawset(L, -3);
+
+  lua_pop(L, 2);
+  return s;
+}
+
+static void luavgl_anchor_release(lua_State *L, const void *owner)
+{
+  lua_checkstack(L, 3);
+  lua_pushlightuserdata(L, (void *)&luavgl_anchor_key);
+  lua_rawget(L, LUA_REGISTRYINDEX);
+  if (lua_istable(L, -1)) {
+    lua_pushlightuserdata(L, (void *)owner);
+    lua_pushnil(L);
+    lua_rawset(L, -3);
+  }
+  lua_pop(L, 1);
 }
 
 LUALIB_API lv_point_t luavgl_topoint(lua_State *L, int idx)
@@ -440,7 +526,7 @@ LUALIB_API lv_property_t luavgl_toproperty(lua_State *L, int idx,
     prop.ptr = lua_tostring(L, idx);
     return prop;
   case LV_PROPERTY_TYPE_FONT:
-    prop.ptr = lua_touserdata(L, idx);
+    prop.ptr = luavgl_tofont(L, idx);
     return prop;
   case LV_PROPERTY_TYPE_BOOL:
     prop.enable = lua_toboolean(L, idx);
@@ -494,8 +580,18 @@ LUALIB_API int luavgl_pushproperty(lua_State *L, const lv_property_t *prop)
   case LV_PROPERTY_TYPE_TEXT:
     lua_pushstring(L, prop->ptr);
     return 1;
-  case LV_PROPERTY_TYPE_IMGSRC:
+  case LV_PROPERTY_TYPE_IMGSRC: {
+    /* a symbol or path reads back as the string a script can set again */
+    lv_image_src_t kind = lv_image_src_get_type(prop->ptr);
+    if (kind == LV_IMAGE_SRC_SYMBOL || kind == LV_IMAGE_SRC_FILE)
+      lua_pushstring(L, prop->ptr);
+    else
+      lua_pushlightuserdata(L, (void *)prop->ptr);
+    return 1;
+  }
   case LV_PROPERTY_TYPE_FONT:
+    /* a font LVGL holds is a real font: a script may set it elsewhere */
+    return luavgl_pushfont(L, prop->ptr);
   case LV_PROPERTY_TYPE_POINTER:
     lua_pushlightuserdata(L, (void *)prop->ptr);
     return 1;
@@ -562,13 +658,17 @@ LUALIB_API int luavgl_set_property_array(lua_State *L, void *obj,
       color.c = luavgl_tocolor(L, -1);
       p->setter(obj, color.v);
     } else if (p->type == SETTER_TYPE_IMGSRC) {
-      /* img src */
-      p->setter_pointer(obj, (void *)luavgl_toimgsrc(L, -1));
+      /* img src: checked, then kept for as long as obj may hold it */
+      luavgl_toimgsrc(L, -1);
+      p->setter_pointer(obj, (void *)luavgl_anchor_string(L, obj, key, -1));
     } else if (p->type == SETTER_TYPE_STACK) {
       p->setter_stack(obj, L);
     } else if (p->type == SETTER_TYPE_POINTER) {
-      void *data = lua_touserdata(L, -1);
-      p->setter_pointer(obj, data);
+      /* light userdata only: a full userdata's bytes belong to the script */
+      if (lua_type(L, -1) != LUA_TLIGHTUSERDATA)
+        return luaL_error(L, "%s: expected light userdata, got %s", key,
+                          luaL_typename(L, -1));
+      p->setter_pointer(obj, lua_touserdata(L, -1));
     } else {
       LV_LOG_ERROR("unsupported type: %d", p->type);
     }
